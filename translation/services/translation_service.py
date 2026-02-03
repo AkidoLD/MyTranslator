@@ -41,6 +41,7 @@ class TranslationService:
 
     def set_active_provider(self, provider_id):
         p = self._providers.get(provider_id)
+        print(f"New provider select. ID = {provider_id}")
         if not p :
             raise ValueError(f"The provider with the id {provider_id} isn't found")
         #

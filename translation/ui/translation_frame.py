@@ -11,7 +11,7 @@ class TranslationFrame(Frame):
         super().__init__(parent, **kwargs)
         #
         self.trans_frame = Frame(self)
-        self.trans_bt = Button(self, text="Traduire", font=("Ubuntu", 20, "bold"))
+        self.trans_bt = Button(self, text="Traduire", font=("Ubuntu", 20, "bold"), cursor="hand2")
         self.details_frame = Frame(self)
         #trans_frame content
         self.left_entry = TranslationEntry(self.trans_frame, bd= 1)

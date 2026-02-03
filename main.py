@@ -1,18 +1,7 @@
-from translation.services import TranslateService
-from translation.infra.providers import ExecTranslationApi
+from app.controllers.app_controller import AppController
+from app.ui.main_window import MainWindow
 
-provider = ExecTranslationApi(
-    "TranslationService",
-    "/home/akido-ld/.local/bin/trans",
-    {"-b": ""},
-    "_current:_target",
-    10
-)
-
-translate = TranslateService(provider)
-
-text = input("Veuillez entrer le texte que vous souhaitez traduire : ").strip()
-
-trad = translate.trans(text, "en", "fr")
-
-print(trad)
+if __name__ == "__main__" :
+    main_window = MainWindow()
+    app_controller = AppController(main_window)
+    main_window.mainloop()

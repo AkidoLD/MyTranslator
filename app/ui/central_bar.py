@@ -1,15 +1,15 @@
 import tkinter as tk
 from tkinter import Frame, Button
 from shared.ui.components.stack_frame import StackFrame
-from translation.ui.translation_frame import TraductionStack
+from translation.ui.translation_frame import TranslationFrame
 
 
 class CentralBar(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
-        self.config(bg="blue")
         self.nav_bar = Frame(self, height=35, relief="sunken", border=1)
         self.stack = StackFrame(self)
+        #
         self.nav_bar.pack(side="top", fill="x")
         self.stack.pack(side="top", fill="both", expand=True)
 
@@ -20,10 +20,10 @@ class CentralBar(tk.Frame):
 
         #Stack content
         self.trad_stack.config(bg="purple")
-        self.traduction_stack = TraductionStack(self.trad_stack)
+        self.translation_frame = TranslationFrame(self.trad_stack)
 
         #
-        self.traduction_stack.pack(fill="both", expand=True)
+        self.translation_frame.pack(fill="both", expand=True)
 
         # Add label inside each stack to visualize
         # tk.Label(self.trad_stack, text="Page Traduire", bg="lightgreen").pack(expand=True)
