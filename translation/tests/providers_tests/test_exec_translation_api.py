@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from translation.providers.exec_translation_api import ExecTranslationApi
+from translation.infra.providers.exec_translation_api import ExecTranslationApi
 from translation.domain.models.request import TranslationRequest
 
 

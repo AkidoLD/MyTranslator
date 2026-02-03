@@ -1,8 +1,8 @@
 from translation.services import TranslateService
-from translation.providers.exec_translation_api import ExecTranslationApi
+from translation.infra.providers import ExecTranslationApi
 
 provider = ExecTranslationApi(
-    "TranslateService",
+    "TranslationService",
     "/home/akido-ld/.local/bin/trans",
     {"-b": ""},
     "_current:_target",

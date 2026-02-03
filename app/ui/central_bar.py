@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import Frame, Button
 from shared.ui.components.stack_frame import StackFrame
-from translation.ui.translation_stack import TraductionStack
+from translation.ui.translation_frame import TraductionStack
 
 
 class CentralBar(tk.Frame):

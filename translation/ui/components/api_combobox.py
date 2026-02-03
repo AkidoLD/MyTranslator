@@ -119,8 +119,8 @@ class ApiComboBox(SmartEventMixin, Frame):
 
         #Api test
         self.add_api("google", "Google", True)
-        self.add_api("trans", "TranslateService", False)
-        self.add_api("arg_trans", "Argos TranslateService", True)
+        self.add_api("trans", "TranslationService", False)
+        self.add_api("arg_trans", "Argos TranslationService", True)
 
         #Bind Events
         self.api_selected.bind(SmartEventMixin.SMART_L_CLICK, self.on_api_selected_clicked, "+")

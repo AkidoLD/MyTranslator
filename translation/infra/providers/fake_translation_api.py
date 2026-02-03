@@ -1,7 +1,7 @@
 from translation.domain.enums.protocol import Protocol
 from translation.domain.models.request import TranslationRequest
 from translation.domain.models.response import TranslationResponse
-from translation.domain.models.translation_api import TranslationApi
+from translation.domain.base.translation_api import TranslationApi
 
 class FakeTranslationApi(TranslationApi):
     def __init__(self):

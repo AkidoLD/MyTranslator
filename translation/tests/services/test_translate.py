@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from translation.services.translateservice import TranslateService
-from translation.providers.fake_translation_api import FakeTranslationApi
+from translation.infra.providers.fake_translation_api import FakeTranslationApi
 
 
 class TestTranslate(TestCase):

@@ -1,22 +1,53 @@
 import subprocess
 from subprocess import TimeoutExpired
-from typing import Optional
+from typing import Self
 
-from translation.domain.enums.protocol import Protocol
+
+from translation.domain.exceptions.translation_error import TranslationError
 from translation.domain.models.request import TranslationRequest
 from translation.domain.models.response import TranslationResponse
-from translation.domain.models.translation_api import TranslationApi
+from translation.domain.base.translation_api import TranslationApi
+from translation.infra.enums import TranslationApiType
 
 
 class ExecTranslationApi(TranslationApi):
 
+    def to_dict(self) -> dict:
+        return {
+            "id": self.id,
+            "name": self.name,
+            "req_internet": self.required_internet,
+            "type": self.type,
+            "langages": self.langages,
+            "timeout": self.timeout,
+            "binary": self._binary,
+            "args": self._arguments,
+            "lang_template": self._lang_template
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Self:
+        return ExecTranslationApi(
+            data["id"],
+            data["name"],
+            data["binary"],
+            data["args"],
+            data["lang_template"],
+            data["langages"],
+            data["req_internet"],
+            data["timeout"]
+        )
+
     def __init__(
             self,
+            api_id: str | None,
             name: str,
             binary: str,
             arguments: dict,
             lang_template: str,
-            timeout: Optional[float] = None
+            langages: dict = None,
+            req_internet: bool = True,
+            timeout: float = 5
     ):
         """
         Create a translation provider based on executing a command-line tool.
@@ -31,10 +62,11 @@ class ExecTranslationApi(TranslationApi):
 
             Example:
                 >>> api = ExecTranslationApi(
+                        "abcdef",
                 ...     "translate",
                 ...     "trans",
                 ...     {"-b": ""},
-                ...     "_current:_target"
+                ...     "_current:_target",
                 ... )
 
             When calling translate(), the command executed will look like:
@@ -44,7 +76,7 @@ class ExecTranslationApi(TranslationApi):
         if not isinstance(arguments, dict):
             raise TypeError("The 'arguments' argument must be a dictionary")
 
-        super().__init__(name, False, Protocol.EXEC)
+        super().__init__(api_id, name, req_internet, TranslationApiType.EXEC, langages, timeout)
 
         self._binary = binary
         self._arguments = arguments
@@ -57,7 +89,7 @@ class ExecTranslationApi(TranslationApi):
         """
 
         # Build the language argument by replacing placeholders
-        lang_spec = self._lang_template.replace("_current", request.source_lang)\
+        lang_spec = self._lang_template.replace("_current", request.source_lang) \
             .replace("_target", request.target_lang)
 
         # Build command safely using a list
@@ -82,19 +114,26 @@ class ExecTranslationApi(TranslationApi):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 text=True,
-                timeout=self._timeout
+                timeout=self._timeout,
             )
-        except FileNotFoundError:
-            return TranslationResponse(False, "Binary not found")
-        except TimeoutExpired:
-            return TranslationResponse(False, "Translation timeout pass")
+        except FileNotFoundError | TimeoutExpired as e:
+            raise TranslationError("An error occurred during the translation", e)
 
         # If the process failed (non-zero exit code)
         if process.returncode != 0:
-            return TranslationResponse(False, process.stderr.strip())
+            raise TranslationError("The translation process failed on ExecTranslationApi")
 
         # Success
         result = process.stdout.strip()
-        return TranslationResponse(True, result)
-
-
+        return TranslationResponse(
+            request.source_lang,
+            result,
+            request.target_lang,
+            request.source_lang,
+            {
+                "Langue source": request.source_lang,
+                "Langue destinataire": request.target_lang,
+                "Texte": request.text,
+                "Traduction": result,
+            }
+        )

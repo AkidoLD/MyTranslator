@@ -1,8 +1,8 @@
 # tests/test_fake_translation_api.py
 
 from unittest import TestCase
-from translation.providers.fake_translation_api import FakeTranslationApi
-from translation.domain.models.translation_api import TranslationRequest
+from translation.infra.providers.fake_translation_api import FakeTranslationApi
+from translation.domain.base.translation_api import TranslationRequest
 from translation.domain.enums.protocol import Protocol
 
 
