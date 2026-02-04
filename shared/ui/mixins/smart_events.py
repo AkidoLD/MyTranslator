@@ -23,6 +23,7 @@ class SmartEventMixin:
         super().__init__(*args, **kwargs)
         self._was_above = None
         self._was_focused = None
+        #
         self.bind_all("<Motion>", self._dispatch_event, "+")
         self.bind_all("<Button>", self._dispatch_event, "+")
         self.bind_all("<FocusIn>", self._dispatch_event, "+")
@@ -43,7 +44,6 @@ class SmartEventMixin:
         x, y = self.winfo_pointerxy()
         return self.winfo_containing(x, y)
 
-
     def _dispatch_event(self, event):
         """
         Call the callback of this event
@@ -52,7 +52,7 @@ class SmartEventMixin:
         """
         match event.type:
             case EventType.Motion:
-                self._on_mouse_move(event)
+                self._on_mouse_motion(event)
 
             case EventType.ButtonPress:
                 self._on_mouse_clicked(event)
@@ -63,41 +63,82 @@ class SmartEventMixin:
             case _:
                 pass
 
-    def _on_mouse_move(self : T | Self, event : Event):
-        is_above = self._is_inside(event.widget)
+    #############################################################
 
-        if self._was_above == is_above:
-            if is_above : self.event_generate(self.SMART_MOTION)
-            return
+    def _on_mouse_motion(self : T | Self, event : Event):
+        widget = event.widget
+        if not widget : return
         #
-        self._was_above = is_above
-        if is_above:
-            self.event_generate(self.SMART_ENTER)
-        else:
-            self.event_generate(self.SMART_LEAVE)
-
+        self._check_mouse_motion(widget)
+        self._check_mouse_enter(widget)
+        self._check_mouse_leave(widget)
 
     def _on_mouse_clicked(self : T | Self, event : Event):
-        is_above = self._is_inside(event.widget)
-        #If the event is not above me, return
-        if not is_above:
-            return
-        #Call the correct mouse event
-        self.event_generate(self.SMART_CLICK)
-        match event.num:
-            case 1: self.event_generate(self.SMART_L_CLICK)
-            case 2: self.event_generate(self.SMART_C_CLICK)
-            case 3: self.event_generate(self.SMART_R_CLICK)
-            case _: pass
+        widget = event.widget
+        if not widget : return
+        #
+        self._check_mouse_click(widget, event.num)
 
     def _on_focus_in(self : T |Self, event : Event):
-        if not self._was_focused and self._is_inside(event.widget) :
+        widget = event.widget
+        if not widget : return
+        #
+        self._check_focus_in(widget)
+        self._check_focus_out(widget)
+
+    #############################################################
+
+    def _check_mouse_motion(self : T | Self, widget : Widget):
+        if self._is_inside(widget) :
+            self.event_generate(self.SMART_MOTION)
+
+    def _check_mouse_click(self : T | Self, widget : Widget, event_num : int):
+        # If the event is not above me, return
+        if not self._is_inside(widget): return
+
+        #Call the generic mouse event
+        self.event_generate(self.SMART_CLICK)
+
+        # Call the specific mouse event
+        match event_num:
+            case 1:
+                self.event_generate(self.SMART_L_CLICK)
+            case 2:
+                self.event_generate(self.SMART_C_CLICK)
+            case 3:
+                self.event_generate(self.SMART_R_CLICK)
+            case _:
+                pass
+
+    def _check_mouse_enter(self : T | Self, widget : Widget):
+        if not widget or self._was_above: return
+        #
+        if self._is_inside(widget) :
+            self.event_generate(self.SMART_ENTER)
+            self._was_above = True
+            #Start checking the mouse leave
+            self.after(500, self._check_mouse_leave, None)
+
+    def _check_mouse_leave(self : T | Self, widget : Widget | None):
+        widget = widget or self.get_widget_under_mouse()
+        #If the previous state is not Enter, do nothing
+        if not self._was_above : return
+        #
+        if not self._is_inside(widget) :
+            self.event_generate(self.SMART_LEAVE)
+            self._was_above = False
+        else : #Otherwise, recheck every 100 milliseconds
+            self.after(300, self._check_mouse_leave, None)
+
+    def _check_focus_in(self : T | Self, widget : Widget):
+        if not self._was_focused and self._is_inside(widget):
             self.event_generate(self.SMART_FOCUS_IN)
             self._was_focused = True
-        elif self._was_focused and not self._is_inside(event.widget):
+
+    def _check_focus_out(self : T | Self, widget : Widget):
+        if self._was_focused and not self._is_inside(widget):
             self._was_focused = False
             self.event_generate(self.SMART_FOCUS_OUT)
-
 
 
 ############################################################
