@@ -115,24 +115,25 @@ class TranslationController:
             detail_widget = TranslationDetailWidget(self._details_frame, title, value, bg="white")
             detail_widget.pack(side="top", anchor="n", fill="x", expand=False, padx=2, pady=2)
 
-    def _on_translate_btn_clicked(self, _ : Event):
-        text : str = self._focused_entry.text
+    def _perform_a_translation(self):
+        text: str = self._focused_entry.text
         if not text.strip(): return
-
         #
         trans_provider = self._trans_service.active_provider
-        #Retrieve langage
+        # Retrieve langage
         src_lang = trans_provider.langages.get(self._focused_entry.combobox.get()) or ""
         dest_lang = trans_provider.langages.get(self._unfocused_entry.combobox.get()) or ""
         #
         try:
             result = self._trans_service.translate(text, dest_lang, src_lang)
             self._unfocused_entry.text = result.translated
-            #show details
+            # show details
             self._display_translation_details(result.details)
-        except RuntimeError as e :
+        except RuntimeError as e:
             print("Oups, une erreur est survenu or de la traduction : ", e)
 
+    def _on_translate_btn_clicked(self, _ : Event):
+        self._trans_frame.after(0, self._perform_a_translation)
 
 if __name__ == "__main__":
     root = tk.Tk()

@@ -159,9 +159,9 @@ class ApiComboBox(SmartEventMixin, Frame):
     def _toggle_float_menu(self, event : Event):
         if self.api_list_widget._is_inside(event.widget) : return
         if not self._is_inside(event.widget) :
-            self.after(100, self.float_frame.hide, )
+            self.after(100, self.float_frame.hide)
         else:
-            self.after(100, self.float_frame.toggle_menu, )
+            self.after(100, self.float_frame.toggle_menu)
 
     def set_values(self, values : list[tuple[str, str, bool]]):
         self._api_data.clear()
@@ -193,9 +193,12 @@ class ApiComboBox(SmartEventMixin, Frame):
 
     def _on_item_selected(self, event : Event):
         w : ApiListItem = event.widget
-        if not w or not isinstance(w, ApiListItem): return
+        if not w or not isinstance(w, ApiListItem): return ""
         #
         self.set_selected_api(w.api_id)
+        self.float_frame.hide()
+        #
+        return "break"
 
     def set_selected_api(self, api_id : str):
         data = self._api_data.get(api_id)
