@@ -6,15 +6,19 @@ from typing import Callable
 from PIL import Image, ImageTk
 from PIL.Image import Resampling
 
+from shared.infra.utils.file_utils import FileUtils
+from shared.infra.utils.image_utils import ImageUtils
+
 
 class ClipboardButton(Button):
+    _COPY_IMAGE_PATH = os.path.join(os.path.dirname(__file__),"../../resources/icons8-copy-96.png")
+
     def __init__(self, parent, value_getter : str | Callable[[], str], size: int = 25, **kwargs):
         #
         super().__init__(parent, **kwargs)
         self.value_getter = value_getter
         #image path
-        self._path = os.path.join(os.path.dirname(__file__),"../../resources/icons8-copy-96.png")
-        self._source_image = Image.open(self._path)
+        self._source_image = ImageUtils.get_image(self._COPY_IMAGE_PATH, (size, size))
         self._size = size
         self._update_image()
         #
@@ -22,8 +26,7 @@ class ClipboardButton(Button):
         self.bind("<Button-1>", self._on_clicked)
 
     def _update_image(self):
-        resized = self._source_image.resize((self._size, self._size), Resampling.LANCZOS)
-        self._img = ImageTk.PhotoImage(resized)
+        self._img = ImageUtils.image_file_to_tk_image(self._source_image, (self._size, self._size))
         self.config(image=self._img)
 
     def _on_clicked(self,_ : Event):

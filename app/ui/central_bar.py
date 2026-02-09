@@ -1,5 +1,8 @@
 import tkinter as tk
-from tkinter import Frame, Button
+from tkinter import Frame
+from tkinter.ttk import Button
+
+from history.ui.history_frame import HistoryFrame
 from shared.ui.components.stack_frame import StackFrame
 from translation.ui.translation_frame import TranslationFrame
 
@@ -21,13 +24,15 @@ class CentralBar(tk.Frame):
         #Stack content
         self.trad_stack.config(bg="purple")
         self.translation_frame = TranslationFrame(self.trad_stack)
+        self.historic_frame = HistoryFrame(self.hist_stack)
 
         #
         self.translation_frame.pack(fill="both", expand=True)
+        self.historic_frame.pack(fill="both", expand=True)
 
         # Add label inside each stack to visualize
         # tk.Label(self.trad_stack, text="Page Traduire", bg="lightgreen").pack(expand=True)
-        tk.Label(self.hist_stack, text="Page Historique", bg="lightgreen").pack(expand=True)
+        # tk.Label(self.hist_stack, text="Page Historique", bg="lightgreen").pack(expand=True)
         tk.Label(self.config_stack, text="Page Configuration", bg="lightgreen").pack(expand=True)
 
         buttons = {

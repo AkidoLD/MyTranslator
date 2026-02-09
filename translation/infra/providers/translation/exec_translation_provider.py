@@ -4,13 +4,13 @@ from typing import Self
 
 
 from translation.domain.exceptions.translation_error import TranslationError
-from translation.domain.models.request import TranslationRequest
-from translation.domain.models.response import TranslationResponse
-from translation.domain.base.translation_api import TranslationApi
-from translation.infra.enums import TranslationApiType
+from translation.domain.models.translation_request import TranslationRequest
+from translation.domain.models.translation_response import TranslationResponse
+from translation.domain.models.translation_provider import TranslationProvider
+from translation.domain.enums.translation_provider_type import TranslationProviderType
 
 
-class ExecTranslationApi(TranslationApi):
+class ExecTranslationProvider(TranslationProvider):
 
     def to_dict(self) -> dict:
         return {
@@ -27,7 +27,7 @@ class ExecTranslationApi(TranslationApi):
 
     @classmethod
     def from_dict(cls, data: dict) -> Self:
-        return ExecTranslationApi(
+        return ExecTranslationProvider(
             data["id"],
             data["name"],
             data["binary"],
@@ -61,7 +61,7 @@ class ExecTranslationApi(TranslationApi):
                                  `_target` with the target language.
 
             Example:
-                >>> api = ExecTranslationApi(
+                >>> api = ExecTranslationProvider(
                         "abcdef",
                 ...     "translate",
                 ...     "trans",
@@ -76,7 +76,7 @@ class ExecTranslationApi(TranslationApi):
         if not isinstance(arguments, dict):
             raise TypeError("The 'arguments' argument must be a dictionary")
 
-        super().__init__(api_id, name, req_internet, TranslationApiType.EXEC, langages, timeout)
+        super().__init__(api_id, name, req_internet, TranslationProviderType.EXEC, langages, timeout)
 
         self._binary = binary
         self._arguments = arguments
@@ -121,12 +121,12 @@ class ExecTranslationApi(TranslationApi):
 
         # If the process failed (non-zero exit code)
         if process.returncode != 0:
-            raise TranslationError("The translation process failed on ExecTranslationApi")
+            raise TranslationError("The translation process failed on ExecTranslationProvider")
 
         # Success
         result = process.stdout.strip()
         return TranslationResponse(
-            request.source_lang,
+            request.text,
             result,
             request.target_lang,
             request.source_lang,

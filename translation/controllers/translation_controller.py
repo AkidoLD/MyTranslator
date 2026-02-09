@@ -1,8 +1,10 @@
 import tkinter as tk
 from tkinter import Event
 
+from shared.infra.events.event_bus import event_bus
+from shared.infra.events.events import Events
 from shared.ui.components.advanced_entry import AdvancedEntry
-from translation.infra.persistance.json_translation_api_repository import JsonTranslationApiRepository
+from translation.infra.persistance.json_translation_provider_repository import JsonTranslationProviderRepository
 from translation.services.translation_service import TranslationService
 from translation.ui.components.translation_entry import TranslationEntry
 from translation.ui.components.translation_detail_widget import TranslationDetailWidget
@@ -27,13 +29,13 @@ class TranslationController:
         self._focused_entry = self._trans_frame.left_entry
         self._unfocused_entry = self._trans_frame.right_entry
         #
-        self._top_combobox = self._trans_frame.top_lang
-        self._bottom_combobox = self._trans_frame.bottom_lang
+        self._top_combobox = self._trans_frame.top_combobox
+        self._bottom_combobox = self._trans_frame.bottom_combobox
         #
         self._focused_entry.combobox = self._top_combobox
         self._unfocused_entry.combobox = self._bottom_combobox
         #
-        self._translate_btn = self._trans_frame.trans_bt
+        self._translate_btn = self._trans_frame.trans_btn
         #
         self._details_count_lb = self._trans_frame.details_count_lb
         self._details_frame = self._trans_frame.details_content_frame
@@ -129,11 +131,13 @@ class TranslationController:
             self._unfocused_entry.text = result.translated
             # show details
             self._display_translation_details(result.details)
+            event_bus.publish(Events.TRANSLATION_COMPLETED, result)
         except RuntimeError as e:
+            event_bus.publish(Events.TRANSLATION_FAILED, e)
             print("Oups, une erreur est survenu or de la traduction : ", e)
 
     def _on_translate_btn_clicked(self, _ : Event):
-        self._trans_frame.after(0, self._perform_a_translation)
+        self._trans_frame.after(0, self._perform_a_translation, )
 
 if __name__ == "__main__":
     root = tk.Tk()
@@ -146,12 +150,9 @@ if __name__ == "__main__":
     # #
     # provider = ExecTranslationApi(None, name, binary, args, lang_template, {"francais" : "fr", "Anglais" : "en", "Espagnol" : "es"}, True)
 
-    repo = JsonTranslationApiRepository("api_list.json")
-    providers = repo.load()
+    repo = JsonTranslationProviderRepository("api_list.json")
     #
-    service = TranslationService(providers)
-    #
-    print(providers)
+    service = TranslationService(repo)
     #
     view = TranslationFrame(root)
     view.place(relwidth=1, relheight=1)

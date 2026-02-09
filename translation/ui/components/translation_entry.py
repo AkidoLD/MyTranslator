@@ -33,7 +33,7 @@ class TranslationEntry(SmartEventMixin, Frame):
         return self._entry.text
 
     def _on_enter_entry(self, _ = None):
-        x, y = self.winfo_rootx() + 5, self.winfo_rooty() + 5
+        x, y = self.winfo_rootx() + self.winfo_width() - (self.float_menu.winfo_reqwidth() + 5), self.winfo_rooty() + 5
         self.float_menu.move_to(x, y)
         self.float_menu.show()
 
