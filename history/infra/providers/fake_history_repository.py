@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Iterable
 
 from history.domain.interfaces.history_repository import HistoryRepository
 
@@ -21,7 +21,7 @@ class FakeHistoryRepository(HistoryRepository):
         if not self._history_map.get(key): self._history_map[key] = []
         self._history_map[key].append(data)
 
-    def add_history_list(self, history_list : List[Dict]):
+    def add_history_list(self, history_list : Iterable[Dict]):
         for data in history_list :
             self.add_history(data)
 
@@ -43,7 +43,7 @@ class FakeHistoryRepository(HistoryRepository):
     def get_history_by_provider(self, provider_key: str, offset: int = 0, limit: int | None = None) -> List[Dict]:
         _offset = offset
         _history_count = self.count_history_by_provider(provider_key)
-        limit = limit or _history_count
+        limit = limit if limit is not None else _history_count
         _limit = min(limit + _offset, _history_count)
         #
         history = self._history_map.get(provider_key, [])

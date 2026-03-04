@@ -6,7 +6,7 @@ from core import get_from_collection, set_in_collection
 class DictUtilsTest(unittest.TestCase):
     def setUp(self):
         self.test_data = {
-            "name": {
+            "_name_lb": {
                 "first": "Akido",
                 "second": "Rayan"
             },
@@ -18,12 +18,12 @@ class DictUtilsTest(unittest.TestCase):
 
     # Tests pour get_from_collection
     def test_get_from_collection_return_the_correct_value(self):
-        self.assertEqual(get_from_collection(self.test_data, "name.first"), "Akido")
+        self.assertEqual(get_from_collection(self.test_data, "_name_lb.first"), "Akido")
         self.assertEqual(get_from_collection(self.test_data, "course.0"), "math")
         self.assertEqual(get_from_collection(self.test_data, "course.1"), "physic")
 
     def test_get_from_collection_returns_none_for_invalid_path(self):
-        self.assertIsNone(get_from_collection(self.test_data, "name.invalid"))
+        self.assertIsNone(get_from_collection(self.test_data, "_name_lb.invalid"))
         self.assertIsNone(get_from_collection(self.test_data, "invalid.path"))
         self.assertIsNone(get_from_collection(self.test_data, "course.10"))
 
@@ -37,7 +37,7 @@ class DictUtilsTest(unittest.TestCase):
         with self.assertRaises(TypeError):
             get_from_collection(self.test_data, None)
         with self.assertRaises(TypeError):
-            get_from_collection(self.test_data, ["name", "first"])
+            get_from_collection(self.test_data, ["_name_lb", "first"])
 
     def test_get_from_collection_with_nested_lists(self):
         data = {"items": [["a", "b"], ["c", "d"]]}
@@ -50,14 +50,14 @@ class DictUtilsTest(unittest.TestCase):
         self.assertEqual(get_from_collection(data, "coords.2"), 30)
 
     def test_get_from_collection_returns_dict_or_list(self):
-        self.assertEqual(get_from_collection(self.test_data, "name"), {"first": "Akido", "second": "Rayan"})
+        self.assertEqual(get_from_collection(self.test_data, "_name_lb"), {"first": "Akido", "second": "Rayan"})
         self.assertEqual(get_from_collection(self.test_data, "course"), ["math", "physic"])
 
     # Tests pour set_in_collection
     def test_set_in_collection_can_set_value(self):
         value = "LD"
-        self.assertTrue(set_in_collection(self.test_data, "name.second", value))
-        self.assertEqual(get_from_collection(self.test_data, "name.second"), value)
+        self.assertTrue(set_in_collection(self.test_data, "_name_lb.second", value))
+        self.assertEqual(get_from_collection(self.test_data, "_name_lb.second"), value)
 
     def test_set_in_collection_can_set_value_in_list(self):
         value = "chemistry"
@@ -66,8 +66,8 @@ class DictUtilsTest(unittest.TestCase):
 
     def test_set_in_collection_can_create_new_key(self):
         value = "Doe"
-        self.assertTrue(set_in_collection(self.test_data, "name.last", value))
-        self.assertEqual(get_from_collection(self.test_data, "name.last"), value)
+        self.assertTrue(set_in_collection(self.test_data, "_name_lb.last", value))
+        self.assertEqual(get_from_collection(self.test_data, "_name_lb.last"), value)
 
     def test_set_in_collection_returns_false_for_invalid_path(self):
         self.assertFalse(set_in_collection(self.test_data, "invalid.path.deep", "value"))
@@ -83,7 +83,7 @@ class DictUtilsTest(unittest.TestCase):
         with self.assertRaises(TypeError):
             set_in_collection(self.test_data, None, "value")
         with self.assertRaises(TypeError):
-            set_in_collection(self.test_data, ["name", "first"], "value")
+            set_in_collection(self.test_data, ["_name_lb", "first"], "value")
 
     def test_set_in_collection_with_nested_structure(self):
         data = {"level1": {"level2": {"level3": "old"}}}
@@ -91,12 +91,12 @@ class DictUtilsTest(unittest.TestCase):
         self.assertEqual(get_from_collection(data, "level1.level2.level3"), "new")
 
     def test_set_in_collection_with_mixed_dict_and_list(self):
-        data = {"users": [{"name": "Alice"}, {"name": "Bob"}]}
-        self.assertTrue(set_in_collection(data, "users.0.name", "Charlie"))
-        self.assertEqual(get_from_collection(data, "users.0.name"), "Charlie")
+        data = {"users": [{"_name_lb": "Alice"}, {"_name_lb": "Bob"}]}
+        self.assertTrue(set_in_collection(data, "users.0._name_lb", "Charlie"))
+        self.assertEqual(get_from_collection(data, "users.0._name_lb"), "Charlie")
 
     def test_set_in_collection_returns_false_on_type_mismatch(self):
-        # Essayer de set sur un type non-indexable
+        # Essayer de set sur un _type non-indexable
         data = {"value": "string"}
         self.assertFalse(set_in_collection(data, "value.invalid", "test"))
 
@@ -108,8 +108,8 @@ class DictUtilsTest(unittest.TestCase):
 
     def test_integration_get_and_set(self):
         # Test d'intégration : set puis get
-        original = get_from_collection(self.test_data, "name.first")
+        original = get_from_collection(self.test_data, "_name_lb.first")
         new_value = "NewName"
-        set_in_collection(self.test_data, "name.first", new_value)
-        self.assertEqual(get_from_collection(self.test_data, "name.first"), new_value)
-        self.assertNotEqual(get_from_collection(self.test_data, "name.first"), original)
+        set_in_collection(self.test_data, "_name_lb.first", new_value)
+        self.assertEqual(get_from_collection(self.test_data, "_name_lb.first"), new_value)
+        self.assertNotEqual(get_from_collection(self.test_data, "_name_lb.first"), original)

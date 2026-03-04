@@ -27,7 +27,7 @@ class JsonTranslationProviderRepository(TranslationProviderRepository):
             with self._file_path.open("r") as file :
                 data = json.load(file)
                 if not isinstance(data, list) :
-                    raise TypeError("Invalid JSON content. The type of the api list must be type of `list`")
+                    raise TypeError("Invalid JSON content. The _type of the api list must be _type of `list`")
                 #
                 return data
         except Exception as e :

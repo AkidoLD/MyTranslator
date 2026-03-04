@@ -2,8 +2,10 @@ import tkinter as tk
 from tkinter import Event
 
 from shared.infra.events.event_bus import event_bus
-from shared.infra.events.events import Events
+from shared.infra.events.events import TranslationEvents
 from shared.ui.components.advanced_entry import AdvancedEntry
+from translation.domain.exceptions.translation_error import TranslationTimeOutError, TranslationError, \
+    ProviderUnavailableError, UnsupportedLanguageError
 from translation.infra.persistance.json_translation_provider_repository import JsonTranslationProviderRepository
 from translation.services.translation_service import TranslationService
 from translation.ui.components.translation_entry import TranslationEntry
@@ -19,6 +21,7 @@ class TranslationController:
         #Check Arguments
         if not isinstance(trans_frame, TranslationFrame) :
             raise ValueError("The translation_frame is not instance of TranslationFrame")
+        #
         if not isinstance(trans_service, TranslationService):
             raise ValueError("The translation_service is not instance of TranslationService")
         #
@@ -43,50 +46,85 @@ class TranslationController:
         self._initialize()
 
     def _initialize(self):
+        self._init_translation_pane()
+        #
         self._focused_entry.bind(TranslationEntry.SMART_FOCUS_IN, self._on_translation_entry_focused)
         self._unfocused_entry.bind(TranslationEntry.SMART_FOCUS_IN, self._on_translation_entry_focused)
+        #
         self._translate_btn.bind("<Button-1>", self._on_translate_btn_clicked)
         #
+        self._focused_entry.entry.bind(AdvancedEntry.TEXT_CHANGED, lambda _ : self._check_translation_fields())
+        self._unfocused_entry.entry.bind(AdvancedEntry.TEXT_CHANGED, lambda _ : self._check_translation_fields())
+        self._top_combobox.bind("<<ComboboxSelected>>", lambda _ : self._check_translation_fields())
+        self._bottom_combobox.bind("<<ComboboxSelected>>", lambda _ : self._check_translation_fields())
+        #
+        self._focused_entry.entry.bind("<KP_Enter>", self._on_translation_entry_enter)
+        self._unfocused_entry.entry.bind("<KP_Enter>", self._on_translation_entry_enter)
+        self._focused_entry.entry.bind("<Return>", self._on_translation_entry_enter)
+        self._unfocused_entry.entry.bind("<Return>", self._on_translation_entry_enter)
+        #
+        event_bus.subscribe(TranslationEvents.PROVIDER_CHANGED, self._on_active_provider_changed)
+
+    def _init_translation_pane(self):
+        self._top_combobox.config(justify="center")
+        self._bottom_combobox.config(justify="center")
+        #
+        self._focused_entry.combobox.set("-- select --")
+        self._unfocused_entry.combobox.set("-- select --")
+        #
         self._set_trans_entry_style()
-        self.load_langages()
-        #
-        self._focused_entry.entry.bind(AdvancedEntry.EVENT_TEXT_CHANGED, lambda _ : self._check_trans_input())
-        self._unfocused_entry.entry.bind(AdvancedEntry.EVENT_TEXT_CHANGED, lambda _ : self._check_trans_input())
-        self._top_combobox.bind("<<ComboboxSelected>>",  lambda _ : self._check_trans_input())
-        self._bottom_combobox.bind("<<ComboboxSelected>>", lambda _ : self._check_trans_input())
-        self._check_trans_input()
+        self._load_langages()
+        self._check_translation_fields()
 
-    def load_langages(self):
-        p = self._trans_service.active_provider
-        if not p :
-            raise RuntimeError("Failed to load langages. No translation api selected. Please, select one and retry")
+    def _on_active_provider_changed(self, data : dict):
+        _ = data.get("provider_key", "")
         #
-        langages = p.langages
-        self._focused_entry.combobox["values"] = tuple(langages.keys())
-        self._unfocused_entry.combobox["values"] = tuple(langages.keys())
+        self._load_langages()
+        self._check_translation_fields()
 
-    def _check_trans_input(self):
+    def _load_langages(self):
+        provider = self._trans_service.active_provider
+        if not provider :
+            print("No provider set. Selection one before.")
+            return
+        #
+        values = tuple(provider.languages.keys())
+        #
+        self._focused_entry.combobox["values"] = values
+        self._unfocused_entry.combobox["values"] = values
+        #
+        if self._focused_entry.combobox.get() not in values :
+            self._focused_entry.combobox.set("-- select --")
+        #
+        if self._unfocused_entry.combobox.get() not in values :
+            self._unfocused_entry.combobox.set("-- select --")
+
+    def _check_translation_fields(self):
         is_valid = True
-        if not self._focused_entry.text : is_valid = False
-        if not self._unfocused_entry.combobox.get() : is_valid = False
-        if not self._focused_entry.combobox.get() : is_valid = False
+        languages =  self._trans_service.active_provider.languages
+        detect_src = self._trans_service.active_provider.detect_src_lang
         #
-        if not is_valid :
-            self._translate_btn.config(state="disabled")
-        else:
-            self._translate_btn.config(state="active")
+        if not self._focused_entry.text : is_valid = False
+        if not  detect_src and self._focused_entry.combobox.get() not in languages: is_valid = False
+        if self._unfocused_entry.combobox.get() not in languages : is_valid = False
+        #
+        self._translate_btn.config(state="normal" if is_valid else "disabled")
+        #
+        return is_valid
+
+    def _on_translation_entry_enter(self, _ : Event):
+        self._trans_frame.after(0, self._perform_translation, )
 
     def _on_translation_entry_focused(self, event : Event):
-        if not event or not isinstance(event, Event) :
-            raise TypeError("The type of event must be type of tkinter.Event. The actual is " + str(type(event)))
+        if not isinstance(event, Event) :
+            return
         #
         self._set_focused_entry(event.widget)
-        self._check_trans_input()
+        self._check_translation_fields()
 
     def _set_focused_entry(self, entry : TranslationEntry) -> None:
-        """Set the focused_entry"""
         if not isinstance(entry, TranslationEntry) :
-            raise TypeError("The entry must be type of TranslationEntry. Actual it is " + str(type(entry)))
+            return
         #
         if entry == self._focused_entry : return
         #
@@ -104,51 +142,62 @@ class TranslationController:
 
     def _display_translation_details(self, details : dict):
         if not isinstance(details, dict) :
-            raise TypeError("Details must be type of dict")
-        #Set the number of details
-        nbr_details = len(details)
-        self._details_count_lb.config(text="(" + str(nbr_details) + ")")
+            return
 
-        #Clear the details Frame
-        for child in self._details_frame.winfo_children():
-            child.destroy()
+        #Set the number of details
+        self._details_count_lb.config(text="(" + str(len(details)) + ")")
+
+        self._clear_details_pane()
         #
         for title, value in details.items() :
             detail_widget = TranslationDetailWidget(self._details_frame, title, value, bg="white")
             detail_widget.pack(side="top", anchor="n", fill="x", expand=False, padx=2, pady=2)
 
-    def _perform_a_translation(self):
+    def _clear_details_pane(self):
+        for child in self._details_frame.winfo_children(): child.destroy()
+
+    def _perform_translation(self):
+        if not self._check_translation_fields() : return
+        #
         text: str = self._focused_entry.text
         if not text.strip(): return
         #
-        trans_provider = self._trans_service.active_provider
+        provider = self._trans_service.active_provider
         # Retrieve langage
-        src_lang = trans_provider.langages.get(self._focused_entry.combobox.get()) or ""
-        dest_lang = trans_provider.langages.get(self._unfocused_entry.combobox.get()) or ""
+        src_lang = provider.languages.get(self._focused_entry.combobox.get(), "")
+        dest_lang = provider.languages.get(self._unfocused_entry.combobox.get(), "")
         #
         try:
             result = self._trans_service.translate(text, dest_lang, src_lang)
             self._unfocused_entry.text = result.translated
             # show details
             self._display_translation_details(result.details)
-            event_bus.publish(Events.TRANSLATION_COMPLETED, result)
-        except RuntimeError as e:
-            event_bus.publish(Events.TRANSLATION_FAILED, e)
-            print("Oups, une erreur est survenu or de la traduction : ", e)
+            #
+        except TranslationTimeOutError as _:
+            pass
+
+        except ProviderUnavailableError as _ :
+            pass
+
+        except UnsupportedLanguageError as _ :
+            pass
+
+        except TranslationError as _ :
+            pass
 
     def _on_translate_btn_clicked(self, _ : Event):
-        self._trans_frame.after(0, self._perform_a_translation, )
+        self._trans_frame.after(0, self._perform_translation, )
 
 if __name__ == "__main__":
     root = tk.Tk()
     root.geometry("500x400")
 
-    # name = "Trans"
+    # _name_lb = "Trans"
     # binary = "/home/akido-ld/.local/bin/trans"
     # args = {"-b": ""}
     # lang_template = "_current:_target"
     # #
-    # provider = ExecTranslationApi(None, name, binary, args, lang_template, {"francais" : "fr", "Anglais" : "en", "Espagnol" : "es"}, True)
+    # provider = ExecTranslationApi(None, _name_lb, binary, args, lang_template, {"francais" : "fr", "Anglais" : "en", "Espagnol" : "es"}, True)
 
     repo = JsonTranslationProviderRepository("api_list.json")
     #

@@ -1,8 +1,8 @@
 from tkinter.ttk import Spinbox
 
 
-class AdvancedSpinBox(Spinbox):
-    def __init__(self, master, **kwargs):
+class IntSpinBox(Spinbox):
+    def __init__(self, master, from_: int = 0, to : int = 9999, **kwargs):
         super().__init__(master, **kwargs)
         #
         def _validate_spin_entry(new_value: str):

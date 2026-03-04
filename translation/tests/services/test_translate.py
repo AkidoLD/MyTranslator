@@ -31,4 +31,4 @@ class TestTranslate(TestCase):
     def test_provider_setter_raises_type_error_if_invalid(self):
         with self.assertRaises(TypeError) as context:
             self.translate.provider = ""
-        self.assertEqual(str(context.exception), "The 'provider' must be of type TranslationApi")
+        self.assertEqual(str(context.exception), "The 'provider' must be of _type TranslationApi")

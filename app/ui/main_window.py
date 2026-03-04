@@ -31,7 +31,7 @@ class MainWindow(tk.Tk):
         return self._top_bar.app_name_label
 
     @property
-    def api_combobox(self):
+    def provider_combobox(self):
         return self._top_bar.api_selector
 
     @property
@@ -41,6 +41,10 @@ class MainWindow(tk.Tk):
     @property
     def history_frame(self):
         return self._central_bar.historic_frame
+
+    @property
+    def setting_frame(self):
+        return self._central_bar.setting_frame
 
 
 if __name__ == "__main__":

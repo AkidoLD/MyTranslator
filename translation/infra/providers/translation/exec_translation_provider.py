@@ -3,57 +3,39 @@ from subprocess import TimeoutExpired
 from typing import Self
 
 
-from translation.domain.exceptions.translation_error import TranslationError
+from translation.domain.exceptions.translation_error import TranslationError, ProviderUnavailableError, \
+    TranslationTimeOutError
 from translation.domain.models.translation_request import TranslationRequest
 from translation.domain.models.translation_response import TranslationResponse
 from translation.domain.models.translation_provider import TranslationProvider
-from translation.domain.enums.translation_provider_type import TranslationProviderType
+from translation.infra.enums.translation_provider_type import TranslationProviderType
 
 
 class ExecTranslationProvider(TranslationProvider):
+    _SRC_LANG_TEMPLATE = "@src_lang"
+    _TARGET_LANG_TEMPLATE = "@target_lang"
 
-    def to_dict(self) -> dict:
-        return {
-            "id": self.id,
-            "name": self.name,
-            "req_internet": self.required_internet,
-            "type": self.type,
-            "langages": self.langages,
-            "timeout": self.timeout,
-            "binary": self._binary,
-            "args": self._arguments,
-            "lang_template": self._lang_template
-        }
-
-    @classmethod
-    def from_dict(cls, data: dict) -> Self:
-        return ExecTranslationProvider(
-            data["id"],
-            data["name"],
-            data["binary"],
-            data["args"],
-            data["lang_template"],
-            data["langages"],
-            data["req_internet"],
-            data["timeout"]
-        )
+    #Mappable keys
+    KEY_BINARY = "binary"
+    KEY_ARGS = "args"
+    KEY_LANG_TEMPLATE = "lang_template"
 
     def __init__(
             self,
-            api_id: str | None,
+            provider_id: str | None,
             name: str,
             binary: str,
             arguments: dict,
             lang_template: str,
-            langages: dict = None,
+            languages: dict = None,
             req_internet: bool = True,
-            timeout: float = 5
+            timeout: float = 5.0
     ):
         """
         Create a translation provider based on executing a command-line tool.
 
         :param name: Name of this translation API.
-        :param binary: Path or name of the executable binary to run.
+        :param binary: Path or _name_lb of the executable binary to run.
         :param arguments: A dictionary representing the CLI arguments to insert
                           into the command. Keys are flags, values are parameters.
         :param lang_template: A template used to generate the language pair.
@@ -61,27 +43,68 @@ class ExecTranslationProvider(TranslationProvider):
                                  `_target` with the target language.
 
             Example:
-                >>> api = ExecTranslationProvider(
-                        "abcdef",
-                ...     "translate",
+                >>> api = ExecTranslationProvider(,
+                        None,
+                ...     "Translate",
                 ...     "trans",
                 ...     {"-b": ""},
-                ...     "_current:_target",
+                ...     "@src_lang:@target_lang",
+                        {...},
+                        True,
+                        10.0
                 ... )
 
             When calling translate(), the command executed will look like:
                 trans -b fr:en text
         """
+        super().__init__(provider_id, name, req_internet, languages, True, timeout)
 
-        if not isinstance(arguments, dict):
-            raise TypeError("The 'arguments' argument must be a dictionary")
+        self.binary = binary
+        self.arguments = arguments
+        self.lang_template = lang_template
 
-        super().__init__(api_id, name, req_internet, TranslationProviderType.EXEC, langages, timeout)
+    @property
+    def binary(self):
+        return self._binary
 
-        self._binary = binary
-        self._arguments = arguments
-        self._lang_template = lang_template
-        self._timeout = timeout
+    @binary.setter
+    def binary(self, value :str):
+        if not isinstance(value, str):
+            raise TypeError(f"_name_lb must be str, got {type(value).__name__}")
+
+        if not value.strip():
+            raise ValueError("Provider value cannot be empty")
+
+        self._binary = value.strip()
+
+    @property
+    def arguments(self):
+        return self._arguments
+
+    @arguments.setter
+    def arguments(self, value : dict):
+        if not isinstance(value, dict):
+            raise TypeError(f"argument must be dictionary, got _type {type(value).__name__}")
+        #
+        self._arguments = value
+
+    @property
+    def lang_template(self):
+        return self._lang_template
+
+    @lang_template.setter
+    def lang_template(self, value : str):
+        if not isinstance(value, str):
+            raise ValueError(f"lang_template must be string, got _type {type(value).__name__}")
+        #
+        if self._SRC_LANG_TEMPLATE not in value :
+            raise ValueError(f"lang_template must contain {self._SRC_LANG_TEMPLATE} to identify src language")
+        #
+        if self._TARGET_LANG_TEMPLATE not in value :
+            raise ValueError(f"lang_template must contain {self._TARGET_LANG_TEMPLATE} to identify target language")
+        #
+        self._lang_template = value
+
 
     def translate(self, request: TranslationRequest) -> TranslationResponse:
         """
@@ -89,14 +112,14 @@ class ExecTranslationProvider(TranslationProvider):
         """
 
         # Build the language argument by replacing placeholders
-        lang_spec = self._lang_template.replace("_current", request.source_lang) \
-            .replace("_target", request.target_lang)
+        lang_spec = self.lang_template.replace(self._SRC_LANG_TEMPLATE, request.source_lang) \
+            .replace(self._TARGET_LANG_TEMPLATE, request.target_lang)
 
         # Build command safely using a list
-        command = [self._binary]
+        command = [self.binary]
 
         # Add CLI arguments from the dictionary
-        for flag, value in self._arguments.items():
+        for flag, value in self.arguments.items():
             command.append(flag)
             if value:
                 command.append(value)
@@ -116,24 +139,57 @@ class ExecTranslationProvider(TranslationProvider):
                 text=True,
                 timeout=self._timeout,
             )
-        except FileNotFoundError | TimeoutExpired as e:
-            raise TranslationError("An error occurred during the translation", e)
+        #
+        except FileNotFoundError as e:
+            raise ProviderUnavailableError(f"Provider binary not found. Check at {self.binary} if it exist.", e)
 
-        # If the process failed (non-zero exit code)
+        except  TimeoutExpired as e :
+            raise TranslationTimeOutError(f"translation timeout exceeded.", e)
+
         if process.returncode != 0:
-            raise TranslationError("The translation process failed on ExecTranslationProvider")
+            raise TranslationError(f"Translation process must end with code 0, got code {process.returncode}")
 
         # Success
         result = process.stdout.strip()
         return TranslationResponse(
             request.text,
             result,
+            request.source_lang or "auto",
             request.target_lang,
-            request.source_lang,
             {
-                "Langue source": request.source_lang,
+                "Langue source": request.source_lang or "auto",
                 "Langue destinataire": request.target_lang,
                 "Texte": request.text,
                 "Traduction": result,
             }
         )
+
+    def to_dict(self) -> dict:
+        return {
+            self.KEY_ID : self.id,
+            self.KEY_NAME : self.name,
+            self.KEY_BINARY : self.binary,
+            self.KEY_TYPE : self.type,
+            self.KEY_ARGS : self.arguments,
+            self.KEY_LANG_TEMPLATE : self.lang_template,
+            self.KEY_REQ_INTERNET : self.req_internet,
+            self.KEY_LANGUAGES : self.languages,
+            self.KEY_DETECT_SRC_LANG : self.detect_src_lang,
+            self.KEY_TIMEOUT : self.timeout
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict) -> Self:
+        return ExecTranslationProvider(
+            data.get(cls.KEY_ID, None),
+            data.get(cls.KEY_NAME, ""),
+            data.get(cls.KEY_BINARY, ""),
+            data.get(cls.KEY_ARGS, {}),
+            data.get(cls.KEY_LANG_TEMPLATE, ""),
+            data.get(cls.KEY_LANGUAGES, {}),
+            data.get(cls.KEY_REQ_INTERNET, True),
+            data.get(cls.KEY_TIMEOUT, 5.0)
+        )
+
+    def get_type(self) -> str:
+        return TranslationProviderType.EXEC

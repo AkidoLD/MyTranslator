@@ -3,7 +3,7 @@ from typing import Self
 from translation.domain.models.translation_request import TranslationRequest
 from translation.domain.models.translation_response import TranslationResponse
 from translation.domain.models.translation_provider import TranslationProvider
-from translation.domain.enums.translation_provider_type import TranslationProviderType
+from translation.infra.enums.translation_provider_type import TranslationProviderType
 
 
 class HttpTranslationProvider(TranslationProvider):
@@ -23,6 +23,7 @@ class HttpTranslationProvider(TranslationProvider):
             name : str,
             req_internet,
             langages,
+            detect_src_lang,
             timeout : float | None
     ):
-        super().__init__(None, name, req_internet, TranslationProviderType.HTTP, langages, timeout)
+        super().__init__(None, name, req_internet, langages, detect_src_lang, timeout)

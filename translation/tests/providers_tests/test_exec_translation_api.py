@@ -16,7 +16,7 @@ class TestExecTranslationProvider(TestCase):
             "espagnol" : "es"
         }
         #
-        self.provider = ExecTranslationProvider(None, name, binary, args, lang_templ, langages,True, 3)
+        self.provider = ExecTranslationProvider(None, name, binary, args, lang_templ, langages, True, 3)
 
     def test_exec_translation_api_work(self):
         self.provider._binary = "/home/akido-ld/.local/bin/trans"

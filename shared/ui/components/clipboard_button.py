@@ -3,15 +3,12 @@ import tkinter as tk
 from tkinter import Button, StringVar, Entry, Event
 from typing import Callable
 
-from PIL import Image, ImageTk
-from PIL.Image import Resampling
 
-from shared.infra.utils.file_utils import FileUtils
 from shared.infra.utils.image_utils import ImageUtils
 
 
 class ClipboardButton(Button):
-    _COPY_IMAGE_PATH = os.path.join(os.path.dirname(__file__),"../../resources/icons8-copy-96.png")
+    _COPY_IMAGE_PATH = os.path.join(os.path.dirname(__file__),"../../resources/icons8-copy-100.png")
 
     def __init__(self, parent, value_getter : str | Callable[[], str], size: int = 25, **kwargs):
         #
@@ -26,7 +23,7 @@ class ClipboardButton(Button):
         self.bind("<Button-1>", self._on_clicked)
 
     def _update_image(self):
-        self._img = ImageUtils.image_file_to_tk_image(self._source_image, (self._size, self._size))
+        self._img = ImageUtils.convert_to_tk_image(self._source_image, (self._size, self._size))
         self.config(image=self._img)
 
     def _on_clicked(self,_ : Event):

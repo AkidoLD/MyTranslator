@@ -6,7 +6,7 @@ class _EventBus:
 
     def subscribe(self, event_name: str, callback):
         if not callable(callback):
-            raise TypeError("The event callback must be type of Callable.")
+            raise TypeError("The event callback must be _type of Callable.")
         #
         if event_name not in self._listeners:
             self._listeners[event_name] = []

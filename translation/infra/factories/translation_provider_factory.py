@@ -1,7 +1,7 @@
-from typing import Dict, Type
+from typing import Dict, Type, Any
 
 from translation.domain.models.translation_provider import TranslationProvider
-from translation.domain.enums.translation_provider_type import TranslationProviderType
+from translation.infra.enums.translation_provider_type import TranslationProviderType
 from translation.infra.providers.translation.exec_translation_provider import ExecTranslationProvider
 from translation.infra.providers.translation.fake_translation_provider import FakeTranslationProvider
 from translation.infra.providers.translation.http_translation_provider import HttpTranslationProvider
@@ -21,10 +21,10 @@ class TranslationProviderFactory:
     def create_from_dict(cls, data: dict) -> TranslationProvider:
         provider_type = data.get("type")
         if not provider_type:
-            raise ValueError("Missing 'type' field in API data")
+            raise ValueError("Missing 'type' field in provider data")
 
         provider_class = cls._providers.get(provider_type)
         if not provider_class:
-            raise ValueError(f"Unknown provider type: {provider_type}")
+            raise ValueError(f"Unknown provider _type: {provider_type}")
 
         return provider_class.from_dict(data)

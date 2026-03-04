@@ -4,7 +4,7 @@ from history.domain.interfaces.history_entry_data import HistoryEntryData
 from history.domain.interfaces.history_provider import HistoryProvider
 from history.domain.interfaces.history_repository import HistoryRepository
 from shared.infra.events.event_bus import event_bus
-from shared.infra.events.events import Events
+from shared.infra.events.events import HistoryEvents
 
 
 class HistoryService :
@@ -48,6 +48,7 @@ class HistoryService :
             raise ValueError(f"The provider with the key : {provider_key} has not found.")
         #
         self._active_provider = provider
+        event_bus.publish(HistoryEvents.PROVIDER_CHANGED, {"provider_key" : provider_key})
 
     @property
     def active_provider(self):
@@ -59,10 +60,11 @@ class HistoryService :
 
     def add_history_entry(self, history_entry : HistoryEntryData):
         self.repository.add_history(history_entry.to_dict())
-        event_bus.publish(Events.HISTORY_ENTRY_ADDED, history_entry)
+        #
+        event_bus.publish(HistoryEvents.ENTRY_ADDED, history_entry.to_dict())
 
     def add_history_entry_list(self, history_list : List[HistoryEntryData]):
-        self.repository.add_history_list([data.to_dict() for data in history_list])
+        self.repository.add_history_list((data.to_dict() for data in history_list))
 
     def get_active_provider_history(self, offset : int = 0, limit : int |  None = None) -> List[HistoryEntryData]:
         if not self.active_provider :

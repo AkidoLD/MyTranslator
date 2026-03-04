@@ -44,7 +44,7 @@ class SmartEventMixin:
         x, y = self.winfo_pointerxy()
         return self.winfo_containing(x, y)
 
-    def _dispatch_event(self, event):
+    def _dispatch_event(self, event: Event):
         """
         Call the callback of this event
         :param event: The caught event

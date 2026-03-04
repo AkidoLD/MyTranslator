@@ -1,6 +1,6 @@
 import tkinter as tk
 
-from translation.ui.components.api_combobox import ApiComboBox
+from translation.ui.components.provider_combobox import ProviderComboBox
 
 
 class TopBar(tk.Frame):
@@ -9,7 +9,7 @@ class TopBar(tk.Frame):
         super().__init__(parent, bg="white", **kwargs)
         self.config(padx=10, pady=10)
         self.app_name_label = tk.Label(self, bg=self["bg"], text=app_name, font=("Ubuntu", 24, "bold"))
-        self.api_selector = ApiComboBox(self, height=75, width=200, bg="gray")
+        self.api_selector = ProviderComboBox(self, height=75, width=200, bg="gray")
         #
         self.app_name_label.pack(side="left")
         self.api_selector.pack(side="right", anchor="e")

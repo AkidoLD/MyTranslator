@@ -8,10 +8,10 @@ class AppService:
 
     def __init__(self, trans_service : TranslationService, history_service : HistoryService):
         if not isinstance(trans_service, TranslationService) :
-            raise TypeError("The trans_service must be type of TranslationService.")
+            raise TypeError("The trans_service must be _type of TranslationService.")
         #
         if not isinstance(history_service, HistoryService):
-            raise TypeError("The history_service must be type of HistoryService")
+            raise TypeError("The history_service must be _type of HistoryService")
         #
         self._trans_service = trans_service
         self._history_service = history_service
@@ -27,6 +27,6 @@ class AppService:
 
     def append_history_entry(self, history_entry : HistoryEntryData):
         if not isinstance(history_entry, HistoryEntryData):
-            raise TypeError("The history_entry must be type of HistoryEntryData")
+            raise TypeError("The history_entry must be _type of HistoryEntryData")
         #
         self._history_service.add_history_entry(history_entry)

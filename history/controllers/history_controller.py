@@ -1,15 +1,15 @@
 import math
 import tkinter
 from tkinter import Event, StringVar
-from tkinter.ttk import Combobox, Style
-from typing import Dict, List
+from tkinter.ttk import Combobox
+from typing import List
 
 
-from history.infra.fake_history_repository import FakeHistoryRepository
+from history.infra.providers.fake_history_repository import FakeHistoryRepository
 from history.services.history_service import HistoryService
 from history.ui.history_frame import HistoryFrame
 from shared.infra.events.event_bus import event_bus
-from shared.infra.events.events import Events
+from shared.infra.events.events import HistoryEvents
 from translation.infra.integration.history.translation_history_entry import TranslationHistoryEntry
 from translation.infra.integration.history.translation_history_provider import TranslationHistoryProvider
 
@@ -34,53 +34,52 @@ class HistoryController:
         self._page_count_lb = history_frame.page_count_lb
         self._next_page_bt = history_frame.next_page_btn
         self._last_page_bt = history_frame.last_page_btn
-        self._displayed_spin = history_frame.displayed_spin
         #
-        self._provider_key_title_map : Dict[str, str] | None = None
+        self._displayed_spin = history_frame.displayed_spin
+        self._refresh_btn = history_frame.refresh_btn
+        self._displayable_lb = history_frame.displayable_lb
         #
         self._displayed_page_var = StringVar()
         self._page_count_var = StringVar()
+        self._displayed_count_var = StringVar()
         self._displayable_count_var = StringVar()
         #
         self.initialize()
 
     def initialize(self):
+        self._init_title_pane()
         self._init_config_pane()
         #
-        self.load_provider_selector_data()
-        self.load_provider_title_key_map()
+        self.load_provider_selector_values()
         #
         self._history_selector.bind("<<ComboboxSelected>>", self._on_provider_selected)
-        event_bus.subscribe(Events.HISTORY_ENTRY_ADDED, lambda e : self.load_provider_history())
+        #
+        event_bus.subscribe(HistoryEvents.ENTRY_ADDED, lambda _ : self.load_active_provider_history())
+
+    def _init_title_pane(self):
+        self._history_selector.config(justify="center")
+        self._history_selector.set("-- select --")
+        self.load_provider_selector_values()
+
 
     def _init_config_pane(self):
-        self._page_selection_spin.config(
-            from_=1,
-            to=1,
-            justify="right",
-            textvariable=self._displayed_page_var
-        )
+        self._page_selection_spin.config(from_=1, to=1, justify="right", textvariable=self._displayed_page_var)
+        self._displayed_spin.config(from_=0, to= 999, justify="right", textvariable=self._displayed_count_var)
+        self._page_count_lb.config(textvariable=self._page_count_var)
+        self._displayable_lb.config(textvariable=self._displayable_count_var)
         #
-        self._displayed_spin.config(
-            from_=1,
-            to= 999,
-            justify="right",
-            textvariable=self._displayable_count_var
-        )
-        #
-        self._page_count_lb.config(
-            textvariable=self._page_count_var
-        )
-        #
-        self._displayable_count_var.set("10")
         self._displayed_page_var.set("1")
         self._page_count_var.set("1")
+        #
+        self._displayed_count_var.set("10")
+        self._displayable_count_var.set("0")
 
         #Binding
         self._first_page_bt.bind("<Button-1>", self._on_first_bt_clicked)
         self._previous_page_bt.bind("<Button-1>", self._on_previous_bt_clicked)
         self._next_page_bt.bind("<Button-1>", self._on_next_bt_clicked)
         self._last_page_bt.bind("<Button-1>", self._on_last_bt_clicked)
+        self._refresh_btn.bind("<Button-1>", self._on_refresh_btn_clicked)
         #
         self._page_selection_spin.bind("<Return>", self._on_displayed_page_enter)
         self._displayed_spin.bind("<Return>", self._on_displayable_enter)
@@ -88,92 +87,108 @@ class HistoryController:
         self._page_selection_spin.bind("<KP_Enter>", self._on_displayed_page_enter)
         self._displayed_spin.bind("<KP_Enter>", self._on_displayable_enter)
 
-    def update_provider_configuration_data(self):
+    def _update_config_pane(self):
         provider = self._history_service.active_provider
         if not provider  :
-            raise RuntimeError("No provider set.")
+            print("No history provider set")
+            return
         #
         history_count = self._history_service.get_provider_history_count(provider)
-        displayed_count = int(self._displayable_count_var.get())
+        displayed_count = int(self._displayed_count_var.get() or 10)
         #
-        page_count = max(math.ceil(history_count / displayed_count) if displayed_count else 1, 1)
-
+        page_count = max(math.ceil(history_count / (displayed_count or 1)) , 1)
         displayed_page = min(int(self._displayed_page_var.get()), page_count)
-        #
-        self._page_count_lb.config(text=page_count)
-        self._page_selection_spin.config(to=page_count)
-        # self._displayed_spin.config(to=history_count)
         #
         self._page_count_var.set(str(page_count))
         self._displayed_page_var.set(str(displayed_page))
+        #
+        self._displayed_count_var.set(str(displayed_count))
+        self._displayable_count_var.set(str(history_count))
+        #
+        self._page_selection_spin.config(to=page_count)
 
-    def load_provider_selector_data(self):
+    def load_provider_selector_values(self):
         self._history_selector.config(values=[provider.title for provider in self._history_service.providers])
 
-    def load_provider_title_key_map(self):
-        self._provider_key_title_map = {provider.title: provider.provider_key for provider in self._history_service.providers}
+    def _get_provider_values_map(self) -> dict:
+        return {provider.title: provider.provider_key for provider in self._history_service.providers}
 
-    def load_provider_history(self):
+    def load_active_provider_history(self):
         provider = self._history_service.active_provider
         if not provider :
             print("No provider set.")
             return
         #
-        self.update_provider_configuration_data()
+        self._update_config_pane()
         #
-        _offset = int(self._displayable_count_var.get()) * (int(self._displayed_page_var.get()) - 1)
-        _limit  = int(self._displayable_count_var.get())
+        _offset = int(self._displayed_count_var.get()) * (int(self._displayed_page_var.get()) - 1)
+        _limit  = int(self._displayed_count_var.get())
 
         self._history_frame.clear_content_frame()
-        widgets = [provider.create_entry_widget(self._histories_pane, provider.deserialize_entry_data(data.to_dict())) for data in self._history_service.get_provider_history(provider, _offset, _limit)]
-        for w in widgets :
-            w.pack(side="top", expand=True, fill="x", pady=4, padx= 2)
+        #
+        try :
+            entries = self._history_service.get_provider_history(provider, _offset, _limit)
+            widgets = [provider.create_entry_widget(self._histories_pane, entry) for entry in entries]
+            #
+            for w in widgets : w.pack(side="top", expand=True, fill="x", pady=4, padx= 2)
+            #
+        except (RuntimeError, TypeError, ValueError) as e:
+            print(f"Failed to load history of {provider.title}", e)
 
     def _on_provider_selected(self, event : Event):
         if not isinstance(event.widget, Combobox) : return
-        self.load_provider_title_key_map()
         widget : Combobox = event.widget
         #
         value = widget.get()
         if not value :
-            raise RuntimeError("No provider selected")
+            print("No provider selected")
+            return
         #
-        key = self._provider_key_title_map.get(widget.get())
+        key = self._get_provider_values_map().get(widget.get())
         if not key :
-            raise ValueError(f"The provider with the name {widget.get()} is not found")
+            print(f"The provider with the name {widget.get()} is not found")
+            return
         #
-        self._history_service.set_active_provider(key)
-        self.load_provider_history()
+        try : self._history_service.set_active_provider(key)
+        except ValueError as e :
+            print(f"Failed to set the active provider with key {key}", e)
+            return
+        #
+        self.load_active_provider_history()
 
     # >>>>>>>>>>>>>>>>> BUTTONS ACTIONS <<<<<<<<<<<<<<<<<<<<<<#
     def _on_first_bt_clicked(self, _ : Event):
         self._displayed_page_var.set("1")
-        self.load_provider_history()
+        self.load_active_provider_history()
 
     def _on_previous_bt_clicked(self, _ : Event):
         new_value = max(int(self._displayed_page_var.get()) - 1, 1)
         self._displayed_page_var.set(str(new_value))
         #
-        self.load_provider_history()
+        self.load_active_provider_history()
 
     def _on_next_bt_clicked(self, _ : Event):
         new_value = min(int(self._displayed_page_var.get()) + 1, int(self._page_count_var.get()))
         self._displayed_page_var.set(str(new_value))
         #
-        self.load_provider_history()
+        self.load_active_provider_history()
 
     def _on_last_bt_clicked(self, _ : Event):
         new_value = int(self._page_count_var.get())
         self._displayed_page_var.set(str(new_value))
         #
-        self.load_provider_history()
+        self.load_active_provider_history()
+
+    def _on_refresh_btn_clicked(self, _ : Event):
+        self._update_config_pane()
+        self.load_active_provider_history()
 
     # >>>>>>>>>>>>>>>>> SPINS ACTIONS <<<<<<<<<<<<<<<<<<<<<<#
     def _on_displayed_page_enter(self, _ : Event):
-        self.load_provider_history()
+        self.load_active_provider_history()
 
     def _on_displayable_enter(self, _ : Event):
-        self.load_provider_history()
+        self.load_active_provider_history()
 
 
 

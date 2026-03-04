@@ -26,8 +26,8 @@ def get_from_collection(container: Any, path: str) -> Optional[Any]:
         TypeError: If path is not a string.
 
     Examples:
-        >>> data = {'user': {'name': 'Alice', 'scores': [10, 20, 30]}}
-        >>> get_from_collection(data, 'user.name')
+        >>> data = {'user': {'_name_lb': 'Alice', 'scores': [10, 20, 30]}}
+        >>> get_from_collection(data, 'user._name_lb')
         'Alice'
         >>> get_from_collection(data, 'user.scores.1')
         20
@@ -80,11 +80,11 @@ def set_in_collection(container: Any, path: str, value: Any) -> bool:
         TypeError: If path is not a string.
 
     Examples:
-        >>> data = {'user': {'name': 'Alice'}}
-        >>> set_in_collection(data, 'user.name', 'Bob')
+        >>> data = {'user': {'_name_lb': 'Alice'}}
+        >>> set_in_collection(data, 'user._name_lb', 'Bob')
         True
         >>> data
-        {'user': {'name': 'Bob'}}
+        {'user': {'_name_lb': 'Bob'}}
         >>> set_in_collection(data, 'invalid.path', 'value')
         False
     """

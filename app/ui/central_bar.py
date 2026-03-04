@@ -3,6 +3,8 @@ from tkinter import Frame
 from tkinter.ttk import Button
 
 from history.ui.history_frame import HistoryFrame
+from settings.ui.setting_frame import SettingFrame
+from shared.ui.components.menu_stack import MenuStack
 from shared.ui.components.stack_frame import StackFrame
 from translation.ui.translation_frame import TranslationFrame
 
@@ -17,28 +19,14 @@ class CentralBar(tk.Frame):
         self.stack.pack(side="top", fill="both", expand=True)
 
         # Create stacks
-        self.trad_stack = self.stack.add_stack_item('trad')
-        self.hist_stack = self.stack.add_stack_item('hist')
-        self.config_stack = self.stack.add_stack_item('config')
-
-        #Stack content
-        self.trad_stack.config(bg="purple")
-        self.translation_frame = TranslationFrame(self.trad_stack)
-        self.historic_frame = HistoryFrame(self.hist_stack)
-
+        self.translation_frame = self.stack.add_item('trad', TranslationFrame)
+        self.historic_frame = self.stack.add_item('hist', HistoryFrame)
+        self.setting_frame = self.stack.add_item('setting', MenuStack)
         #
-        self.translation_frame.pack(fill="both", expand=True)
-        self.historic_frame.pack(fill="both", expand=True)
-
-        # Add label inside each stack to visualize
-        # tk.Label(self.trad_stack, text="Page Traduire", bg="lightgreen").pack(expand=True)
-        # tk.Label(self.hist_stack, text="Page Historique", bg="lightgreen").pack(expand=True)
-        tk.Label(self.config_stack, text="Page Configuration", bg="lightgreen").pack(expand=True)
-
         buttons = {
             "Traduire": "trad",
             "Historique": "hist",
-            "Configuration": "config"
+            "Paramètres": "setting"
         }
 
         for text, tag in buttons.items():
@@ -47,7 +35,7 @@ class CentralBar(tk.Frame):
             btn.bind("<Button-1>", lambda e, t = tag: self.on_switch_bt_clicked(tag=t, event=e))
 
     def on_switch_bt_clicked(self, tag, event):
-        self.stack.show_child(tag)
+        self.stack.raise_item(tag)
 
 
 if __name__ == "__main__":

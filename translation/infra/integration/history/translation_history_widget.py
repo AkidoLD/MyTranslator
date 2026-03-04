@@ -32,22 +32,20 @@ class TranslationHistoryWidget(HistoryEntryWidget, SmartEventMixin, Frame) :
         #
         self.config(pady=1, padx=1, background=master["bg"])
         #
-        self._style = Style(self)
-        # self._style.theme_use("clam")
-        self._style.configure(
+        Style().configure(
             "Text.TLabel",
             background=self._BACKGROUND_COLOR,
             font=("Ubuntu", 13),
             wraplength=250
         )
 
-        self._style.configure(
+        Style().configure(
             "Lang.TLabel",
             background=self._BACKGROUND_COLOR,
             font=("Arial", 16, "bold"),
         )
 
-        self._style.configure(
+        Style().configure(
             "Time.TLabel",
             background=self._BORDER_COLOR,
             foreground=self._TIME_COLOR,
@@ -58,8 +56,8 @@ class TranslationHistoryWidget(HistoryEntryWidget, SmartEventMixin, Frame) :
         self._was_horizontal = None
         #
         self._img = ImageUtils.get_image(self._TOWARD_ICON_PATH, size=(50, 50))
-        self._toward_image_0 = ImageUtils.image_file_to_tk_image(self._img, size=(20, 20))
-        self._toward_image_90 = ImageUtils.image_file_to_tk_image(self._img, size=(20, 20), angle=-90)
+        self._toward_image_0 = ImageUtils.convert_to_tk_image(self._img, size=(20, 20))
+        self._toward_image_90 = ImageUtils.convert_to_tk_image(self._img, size=(20, 20), rotation=-90)
 
         #Content Frame
         self._bordered_frame = BorderedFrame(self, background=self._BACKGROUND_COLOR, border=2, border_color=self._BORDER_COLOR)
@@ -135,7 +133,7 @@ if __name__ == "__main__" :
     history = TranslationHistoryWidget(
         frame,
         "Bonjour, je m'appelle Wouagang Sakam Rayen Alex (AkidoLD) et je suis programmeur.",
-        "Hello, my name is Wouagang Sakam Rayen Alex (AkidoLD) and I am a programmer",
+        "Hello, my _name_lb is Wouagang Sakam Rayen Alex (AkidoLD) and I am a programmer",
         "fr",
         "en",
         datetime.now()

@@ -1,5 +1,11 @@
 class TranslationError(Exception):
     pass
 
-class TranslationTimeOutException(TranslationError):
+class TranslationTimeOutError(TranslationError):
+    pass
+
+class ProviderUnavailableError(TranslationError):
+    pass
+
+class UnsupportedLanguageError(TranslationError):
     pass

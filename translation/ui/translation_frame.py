@@ -14,22 +14,23 @@ class TranslationFrame(Frame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         #
-        self._trans_bt_img = ImageUtils.image_file_to_tk_image(ImageUtils.get_image(self._TRANSLATION_BT_IMG_PATH, (40, 40)))
+        self._trans_bt_img = ImageUtils.convert_to_tk_image(
+            ImageUtils.get_image(self._TRANSLATION_BT_IMG_PATH, (40, 40)))
         #
         self._trans_frame = Frame(self)
         self._trans_bt = Button(self, text="Traduire", image=self._trans_bt_img, compound="left", font=("Ubuntu", 20, "bold"), cursor="hand2")
         self._details_frame = Frame(self)
         #trans_frame content
-        self._left_entry = TranslationEntry(self._trans_frame, bd= 1)
-        self._right_entry = TranslationEntry(self._trans_frame,bd= 1)
+        self._left_entry = TranslationEntry(self._trans_frame, border= 1)
+        self._right_entry = TranslationEntry(self._trans_frame,border= 1)
         self._change_lang = Frame(self._trans_frame)
         #
-        self._top_lang = Combobox(self._change_lang, width=8, font=("Ubuntu", 12, "bold"), state="readonly")
+        self._top_lang = Combobox(self._change_lang, width=10, font=("Ubuntu", 12, "bold"), state="readonly")
         self._central_text = Label(self._change_lang, text="To", font=("Ubuntu", 18, "bold"))
-        self._bottom_lang = Combobox(self._change_lang, width=8, font=("Ubuntu", 12, "bold"), state="readonly")
+        self._bottom_lang = Combobox(self._change_lang, width=10, font=("Ubuntu", 12, "bold"), state="readonly")
 
         #Trans_info frame content
-        self._details_content_scroll = ScrollPane(self._details_frame)
+        self._details_content_scroll = ScrollPane(self._details_frame, background=self['bg'])
         self._details_title_frame = Frame(self._details_frame, bg="gray")
         self._details_content_frame = self._details_content_scroll.pane
         self._details_title_lb = Label(self._details_title_frame, background="gray", text="Details", font=("Ubuntu", 18, "bold"))

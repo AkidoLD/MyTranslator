@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict
+from typing import List, Dict, Iterable
 
 
 class HistoryRepository(ABC):
@@ -13,7 +13,7 @@ class HistoryRepository(ABC):
         pass
 
     @abstractmethod
-    def add_history_list(self,  history_list : List[Dict]):
+    def add_history_list(self,  history_list : Iterable[Dict]):
         pass
 
     @abstractmethod

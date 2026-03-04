@@ -12,15 +12,15 @@ class TestFakeTranslationApi(TestCase):
         self.provider = FakeTranslationApi()
 
     def test_object_initialization(self):
-        self.assertEqual(self.provider.name, "Fake API")
+        self.assertEqual(self.provider._name_lb, "Fake API")
         self.assertEqual(self.provider.protocol, Protocol.EXEC)
 
     def test_translation_returns_valid_response(self):
         response = self.provider.translate(TranslationRequest("Salut", "eng"))
-        self.assertTrue(response.status)
+        self.assertTrue(response.req_internet)
         self.assertEqual(response.result, "Salut")
 
     def test_translation_returns_invalid_response(self):
         response = self.provider.translate(TranslationRequest("", "eng"))
-        self.assertFalse(response.status)
+        self.assertFalse(response.req_internet)
         self.assertIsNone(response.result)
