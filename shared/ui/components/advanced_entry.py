@@ -1,108 +1,102 @@
 import tkinter as tk
+from tkinter import StringVar
 
-from tkinter import Entry, Event, Button, StringVar
+from tkinter.ttk import Entry, Button
+
+from shared.infra.utils.validation_utils import validate_type
 
 
 class AdvancedEntry(Entry):
     #Custom event
-    EVENT_TEXT_CHANGED = "<<TextChanged>>"
+    TEXT_CHANGED = "<<TextChanged>>"
 
     def __init__(
             self,
             parent,
             text: str = "",
+            textvariable : StringVar = None,
             placeholder: str = "",
-            text_color: str | None = None,
-            placeholder_color: str | None = None,
+            foreground: str = 'black',
+            placeholder_color: str = "gray",
             **kwargs
     ):
         super().__init__(parent, **kwargs)
-
-        self._var_text = StringVar(value=text)
-        self.config(textvariable=self._var_text)
-        self._placeholder = placeholder
-        self._text_color = text_color if text_color else "black"
-        self._placeholder_color = placeholder_color if placeholder_color else "gray"
-        self._placeholder_is_shown = False
-        #Show the placeholder if it's needed
-        self._show_placeholder() if self._var_text.get() == "" else self._hide_placeholder()
         #
-        self.bind("<FocusIn>", self._on_focus_in)
-        self.bind("<FocusOut>", self._on_focus_out)
-        self._var_text.trace_add("write", self._on_text_changed)
+        self.textvariable = textvariable or StringVar(self)
+        self._placeholder = placeholder
+        self._foreground = foreground
+        self._placeholder_color = placeholder_color
+        self._placeholder_is_shown = False
+        #
+        self.text = text
+    
+    @property
+    def textvariable(self) -> StringVar:
+        return self._textvariable
+
+    @textvariable.setter
+    def textvariable(self, value : StringVar):
+        self._textvariable : StringVar = validate_type(value, StringVar, "textvariable")
+        self.configure(textvariable=value)
+        self._textvariable.trace_add('write', self._on_text_changed)
 
     def _on_text_changed(self, *_):
-        self.event_generate(self.EVENT_TEXT_CHANGED)
-
-    def _on_focus_in(self, event):
-        if self._placeholder_is_shown:
-            self._hide_placeholder()
-
-    def _on_focus_out(self, event):
-        if not self.get():  # Si vide
-            self._show_placeholder()
-
-    def _show_placeholder(self):
-        if self._placeholder_is_shown:
-            return
-        #
-        self._var_text.set(self._placeholder or "")
-        self.config(fg=self._placeholder_color)
-        self._placeholder_is_shown = True
-
-    def _hide_placeholder(self):
-        if not self._placeholder_is_shown:
-            return
-        #
-        self._var_text.set("")
-        self.config(fg=self._text_color)
-        self._placeholder_is_shown = False
-
-
-    def set_text(self, value : str):
-        if value == "":
-            return
-        #
-        self._hide_placeholder()
-        self._var_text.set(value)
-
-    def get_text(self):
-        return "" if self._placeholder_is_shown else self._var_text.get()
-
-    def set_placeholder(self, value : str):
-        self._placeholder = value
-        if self._placeholder_is_shown:
-            self.var_text.set(value)
-
-    def get_placeholder(self):
-        return self._placeholder
-
-    @property
-    def placeholder(self):
-        return self.get_placeholder()
-
-    @placeholder.setter
-    def placeholder(self, value : str):
-        self.set_placeholder(value)
+        self._toggle_placeholder()
+        self.event_generate(self.TEXT_CHANGED)
 
     @property
     def text(self):
-        return self.get_text()
+        return "" if self._placeholder_is_shown else self.textvariable.get()
 
     @text.setter
-    def text(self, value : str):
-        self.set_text(value)
+    def text(self, value):
+        if value : self._hide_placeholder()
+        self.textvariable.set(validate_type(value, str, "text"))
 
     @property
-    def var_text(self):
-        return self._var_text
+    def placeholder(self):
+        return self._placeholder
 
-    @var_text.setter
-    def var_text(self, value : StringVar):
-        if not isinstance(value, StringVar) :
-            raise TypeError("The var_text must be StringVar type.")
+    @placeholder.setter
+    def placeholder(self, value):
+        self._placeholder = validate_type(value, str, "placeholder")
+        if self._placeholder_is_shown : self._show_placeholder(True)
+
+    def get(self):
+        return self.text
+
+    def set(self, value : str):
+        self.text = value
+
+    def _toggle_placeholder(self):
+        self._show_placeholder() if not self._placeholder_is_shown and not self.text else self._hide_placeholder()
+
+    def _show_placeholder(self, force : bool = False):
+        if not force and self._placeholder_is_shown: return
         #
-        self._var_text = value
+        self.text = self._placeholder
+        self.configure(foreground=self._placeholder_color)
+        self._placeholder_is_shown = True
+        #
+        self._cursor_lock_id = self.bind("<ButtonPress>", self._lock_cursor, add="+")
+        self.bind("<B1-Motion>", self._lock_cursor, add="+")
+        self.bind("<Key>", self._lock_cursor, add="+")
+
+    def _hide_placeholder(self):
+        if not self._placeholder_is_shown: return
+        #
+        self.delete(1, 'end')
+        self.configure(foreground=self._foreground)
+        self._placeholder_is_shown = False
+        #
+        self.unbind("<ButtonPress>")
+        self.unbind("<B1-Motion>")
+        self.unbind("<Key>")
+        #
+        self.after(0, lambda _: super(AdvancedEntry, self).icursor('end'), None)
+
+    def _lock_cursor(self, _):
+        self.after(0, lambda _: super(AdvancedEntry, self).icursor(0), None)
 
 if __name__ == "__main__" :
     root = tk.Tk()
