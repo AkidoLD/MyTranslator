@@ -9,18 +9,17 @@ class AboutFrame(Frame):
             app_creator: str,
             **kwargs
     ):
-        super().__init__(master, **kwargs)
+        super().__init__(master, padding=10,**kwargs)
         #
         Style().configure(
             "AboutFrame.TFrame",
             background="white",
-            padding=(10, 10)
         )
         #
         self.configure(style="AboutFrame.TFrame")
         #
-        description = ("    MyTranslator est une application en python qui permet d'effectuer a partir de plusieurs provider different.\n"
-                       "    Avec son système de provider, c'est a l'utilisateur de choisir le provider qu'il veut utiliser un faire ca traduction, et de customiser son comportement comment bon lui semble.\n"
+        description = ("    MyTranslator est une application en python qui permet d'effectuer des traduction a partir de plusieurs type de fournisseur different.\n"
+                       "    Avec son système de Fournisseur, c'est a l'utilisateur de choisir le provider qu'il veut utiliser un faire ca traduction, et de customiser son comportement comment bon lui semble.\n"
                        "    Cette app a ete créer a but eductif, afin de maitrise le concepte de clean architecture, et donc d'améliore la qualité de mes code.")
         #
         Label(self, text="A propos de MyTranslator", font=("Ubuntu", 18, 'bold'), background="white").pack(side='top', fill="x", pady=5)

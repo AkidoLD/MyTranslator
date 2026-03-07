@@ -5,12 +5,13 @@ from typing import Tuple, Iterable
 
 
 from shared.infra.utils.validation_utils import validate_type, validate_not_empty
-from shared.ui.components.circle_widget import CircleWidget
 from shared.ui.components.smart_frame import SmartFrame
-from translation.ui.components.provider_combobox_item import ProviderComboboxItem
+from translation.ui.components.provider_combobox_item import ProviderComboboxItem, ProviderInternetReqCircle
 
 
 class ProviderCombobox(Frame):
+    PROVIDER_SELECTED = "<<ProviderSelection>>"
+    #
     def __init__(self, master, **kwargs):
         super().__init__(
             master,
@@ -48,9 +49,10 @@ class ProviderCombobox(Frame):
             style="ReqInternetLabel.ProviderCombobox.TLabel",
             font=("Ubuntu", 11, "bold")
         )
-        self._provider_req_internet_cl = CircleWidget(
+        self._provider_req_internet_cl = ProviderInternetReqCircle(
             _content_pane,
-            15,
+            None,
+            diameter=15,
             color="#f7f7f7",
             width=1,
             background=_bg_color
@@ -67,8 +69,8 @@ class ProviderCombobox(Frame):
         #
         title_lb.grid(row=0, column=0, sticky='nswe', padx=2)
         self._provider_name_lb.grid(row=0, column=1, columnspan=3, sticky='nswe', padx=4, pady=8)
-        self._provider_req_internet_lb.grid(row=1, column=2)
-        self._provider_req_internet_cl.grid(row=1, column=3)
+        self._provider_req_internet_lb.grid(row=1, column=2, padx=1)
+        self._provider_req_internet_cl.grid(row=1, column=3, padx=1)
         #
         _content_pane.grid_columnconfigure(1, weight=1)
         _content_pane.grid_rowconfigure(0, weight=1)
@@ -87,7 +89,7 @@ class ProviderCombobox(Frame):
         style.configure("ReqInternetLabel.ProviderCombobox.TLabel", background=_bg_color)
         style.map("ReqInternetLabel.ProviderCombobox.TLabel", background=[('active', _h_color)])
 
-        style.configure("ItemFrame.ProviderCombobox.TFrame", background="#e1e1e1", borderwidth=1)
+        style.configure("ItemFrame.ProviderCombobox.TFrame", background="#e1e1e1", borderwidth=1, relief='solid')
 
         def _on_enter(_):
             title_lb.state(["active"])
@@ -135,18 +137,14 @@ class ProviderCombobox(Frame):
 
     @property
     def req_internet(self):
-        return self._req_internet
+        return self._provider_req_internet_cl.req_internet
 
     @req_internet.setter
     def req_internet(self, value):
-        if value is None:
-            self._req_internet = None
-            self._provider_req_internet_cl.color = "#f7f7f7"
-            self._provider_req_internet_lb.config(text="")
-        else:
-            self._req_internet = validate_type(value, bool, "req_internet")
-            self._provider_req_internet_cl.color = "#75ff73" if value else "#75fdff"
-            self._provider_req_internet_lb.config(text="Online" if value else "Offline")
+        self._provider_req_internet_cl.req_internet = value
+        text = "" if value is None else "Online" if value else "Offline"
+        self._provider_req_internet_lb.config(text=text)
+
 
     @property
     def p_id(self):
@@ -161,6 +159,7 @@ class ProviderCombobox(Frame):
 
     def set(self, value : Tuple[str, str, bool] | None):
         self.p_id, self.name, self.req_internet = value or (None, None, None)
+        self.event_generate(self.PROVIDER_SELECTED)
 
     def get(self) -> Tuple[str, str, bool]:
         return self.p_id, self.name, self.req_internet
@@ -171,13 +170,22 @@ class ProviderCombobox(Frame):
     def set_values(self, values : Iterable[Tuple[str, str, bool]]):
         self.clear_items()
         for t in values :
-            p = ProviderComboboxItem(self._item_frame, t[0], t[1], t[2])
+            p = ProviderComboboxItem(self._item_frame, *t)
             p.bind(p.SMART_L_CLICK, self._on_item_selected)
             p.pack(side='top', fill='x')
+
+    @property
+    def values(self):
+        return [(item.p_id, item.name, item.req_internet) for item in self._item_frame.winfo_children()]
+
+    @values.setter
+    def values(self, value):
+        self.set_values(value)
 
     def _on_item_selected(self, e : Event):
         self.set(e.widget.get())
         self._hide_item_frame()
+
 
 if __name__ == "__main__":
     root = tkinter.Tk()

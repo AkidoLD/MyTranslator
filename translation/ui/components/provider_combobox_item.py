@@ -4,9 +4,26 @@ from typing import Tuple
 
 from shared.infra.utils.validation_utils import validate_type, validate_not_empty
 from shared.ui.components.circle_widget import CircleWidget
-from shared.ui.components.smart_frame import SmartFrame
 from shared.ui.mixins.smart_events import SmartEventMixin
 
+class ProviderInternetReqCircle(CircleWidget):
+    def __init__(self, master, req_internet, **kwargs):
+        super().__init__(master, **kwargs)
+        #
+        self.req_internet = req_internet
+
+    @property
+    def req_internet(self):
+        return self._req_internet
+
+    @req_internet.setter
+    def req_internet(self, value: bool):
+        if value is None:
+            self._req_internet = None
+            self.color = "#f7f7f7"
+        else:
+            self._req_internet = validate_type(value, bool, "req_internet")
+            self.color = "#4de14a" if value else "#529ee1"
 
 class ProviderComboboxItem(Frame, SmartEventMixin):
     def __init__(
@@ -38,10 +55,10 @@ class ProviderComboboxItem(Frame, SmartEventMixin):
             style="NameLabel.ProviderComboboxItem.TLabel",
             font=font
         )
-        self._req_internet_cl = CircleWidget(
+        self._req_internet_cl = ProviderInternetReqCircle(
             self,
-            15,
-            color= "#75ff73" if req_internet else "#75fdff",
+            req_internet,
+            diameter=15,
             width=1,
             outline="black",
             background=background

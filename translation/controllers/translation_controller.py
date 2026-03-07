@@ -53,15 +53,15 @@ class TranslationController:
         #
         self._translate_btn.config(command=self._on_translate_btn_clicked)
         #
-        self._focused_entry.entry.bind(AdvancedEntry.TEXT_CHANGED, lambda _ : self._check_translation_fields())
-        self._unfocused_entry.entry.bind(AdvancedEntry.TEXT_CHANGED, lambda _ : self._check_translation_fields())
+        self._focused_entry.bind(AdvancedEntry.TEXT_CHANGED, lambda _ : self._check_translation_fields())
+        self._unfocused_entry.bind(AdvancedEntry.TEXT_CHANGED, lambda _ : self._check_translation_fields())
         self._top_combobox.bind("<<ComboboxSelected>>", lambda _ : self._check_translation_fields())
         self._bottom_combobox.bind("<<ComboboxSelected>>", lambda _ : self._check_translation_fields())
         #
-        self._focused_entry.entry.bind("<KP_Enter>", self._on_translation_entry_enter)
-        self._unfocused_entry.entry.bind("<KP_Enter>", self._on_translation_entry_enter)
-        self._focused_entry.entry.bind("<Return>", self._on_translation_entry_enter)
-        self._unfocused_entry.entry.bind("<Return>", self._on_translation_entry_enter)
+        self._focused_entry.bind("<KP_Enter>", self._on_translation_entry_enter)
+        self._unfocused_entry.bind("<KP_Enter>", self._on_translation_entry_enter)
+        self._focused_entry.bind("<Return>", self._on_translation_entry_enter)
+        self._unfocused_entry.bind("<Return>", self._on_translation_entry_enter)
         #
         event_bus.subscribe(TranslationService.TRANS_PROVIDER_CHANGED, self._on_active_provider_changed)
         event_bus.subscribe(TranslationService.TRANS_PROVIDER_REMOVED, self._on_trans_provider_removed)
@@ -130,9 +130,6 @@ class TranslationController:
         self._perform_translation()
 
     def _on_translation_entry_focused(self, event : Event):
-        if not isinstance(event, Event) :
-            return
-        #
         self._set_focused_entry(event.widget)
         self._check_translation_fields()
 
@@ -148,9 +145,6 @@ class TranslationController:
         self._set_trans_entry_style()
 
     def _set_trans_entry_style(self):
-        self._focused_entry.config(bd=1, relief="solid")
-        self._unfocused_entry.config(bd=1, relief="flat")
-        #
         self._focused_entry.placeholder = self.FOCUSED_ENTRY_PLACEHOLDER
         self._unfocused_entry.placeholder = self.UNFOCUSED_ENTRY_PLACEHOLDER
 

@@ -8,7 +8,7 @@ from typing import Callable
 from shared.infra.utils.image_utils import ImageUtils
 from shared.infra.utils.validation_utils import validate_type, validate_not_empty, validate_callable
 from shared.ui.components.smart_frame import SmartFrame
-from translation.ui.components.provider_combobox import ProviderInternetReqCircle
+from translation.ui.components.provider_combobox_item import ProviderInternetReqCircle
 
 
 class TransProviderWidget(Frame):
@@ -33,7 +33,7 @@ class TransProviderWidget(Frame):
         self._delete_img = ImageUtils.get_tk_image(self._DELETE_IMG_PATH, (25, 25))
         #
         self._info_pane = SmartFrame(self)
-        self._status_circle = ProviderInternetReqCircle(self._info_pane, provider_req_internet, 15)
+        self._status_circle = ProviderInternetReqCircle(self._info_pane, provider_req_internet, diameter=15, width=1)
         self._provider_name_lb = Label(self._info_pane, style="ProviderName.TLabel")
         self._provider_type_lb = Label(self._info_pane, style="ProviderType.TLabel", width=0)
         self._lang_count_lb = Label(self._info_pane, style="ProviderLang.TLabel", width=0)

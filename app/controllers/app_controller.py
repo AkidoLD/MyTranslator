@@ -1,4 +1,3 @@
-from tkinter import Event
 
 from app.services.app_service import AppService
 from app.ui.main_window import MainWindow
@@ -6,7 +5,7 @@ from shared.infra.events.event_bus import event_bus
 from translation.application.services.translation_service import TranslationService
 from translation.domain.models.translation_provider import TranslationProvider
 from translation.infra.integration.history.translation_history_entry import TranslationHistoryEntry
-from translation.ui.components.provider_combobox import ProviderComboBox
+from translation.ui.components.provider_combobox import ProviderCombobox
 
 
 class AppController:
@@ -18,7 +17,7 @@ class AppController:
         self._provider_combobox = main_window.provider_combobox
         #
         self.load_provider_combobox_providers()
-        self._provider_combobox.bind(ProviderComboBox.PROVIDER_SELECTED, self._on_api_combobox_selected)
+        self._provider_combobox.bind(ProviderCombobox.PROVIDER_SELECTED, self._on_provider_combobox_selected)
         #
         event_bus.subscribe(TranslationService.TRANS_COMPLETED, self._on_translation_completed)
         event_bus.subscribe(TranslationService.TRANS_PROVIDER_ADDED, self._on_trans_providers_changed)
@@ -45,10 +44,8 @@ class AppController:
         selected : TranslationProvider = self._app_service.get_active_provider()
 
         #Display the selected provider
-        if selected : self._provider_combobox.set_selected_provider(selected.id)
+        data = (selected.id, selected.name, selected.req_internet) if selected else None
+        self._provider_combobox.set(data)
 
-    def _on_api_combobox_selected(self, event : Event):
-        widget : ProviderComboBox = event.widget
-        #
-        provider_id = widget.get()
-        self._app_service.set_active_provider(provider_id)
+    def _on_provider_combobox_selected(self, _):
+        self._app_service.set_active_provider(self._provider_combobox.get()[0])

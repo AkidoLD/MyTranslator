@@ -167,7 +167,7 @@ if __name__ == "__main__" :
     entry1 = EntryField(root, "entry", "Nom", placeholder="Entrez votre texte ici...", read_only=True)
     combobox = ComboBoxField(root, "btn", True, values=("1", "2", "3"))
     checkbutton = CheckBoxField(root, "check", False, text="Coche et décoche moi.")
-    combobox.bind("<<ComboboxSelected>>", lambda e : print(e.widget.get()))
+    combobox.bind("<<ComboboxSelected>>", lambda e : print(e.widget.get_provider()))
     checkbutton.on_changed = lambda i : print(i)
     spin = IntSpinBoxField(root, "spin", from_=0, to_ = 100)
     spin.on_changed = lambda i: print(i)

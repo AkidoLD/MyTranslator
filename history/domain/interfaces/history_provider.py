@@ -9,21 +9,20 @@ class HistoryProvider(ABC):
     PROVIDER_KEY = "provider_key"
     #
 
-    def __init__(self, provider_key : str, title : str):
-        self._provider_key = provider_key
+    def __init__(self, title : str):
         self._title = title
-
-    @property
-    def provider_key(self):
-        return self._provider_key
 
     @property
     def title(self):
         return self._title
 
-    @provider_key.setter
-    def provider_key(self, key : str):
-        self._provider_key = key
+    @property
+    def provider_key(self):
+        return self.get_key()
+
+    @staticmethod
+    @abstractmethod
+    def get_key() -> str : pass
 
     @abstractmethod
     def deserialize_entry_data(self, data : dict) -> HistoryEntryData:

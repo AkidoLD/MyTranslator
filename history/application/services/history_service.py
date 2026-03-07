@@ -55,7 +55,7 @@ class HistoryService :
         event_bus.publish(self.HISTORY_PROVIDER_CHANGED, {HistoryProvider.PROVIDER_KEY : provider_key})
 
     def delete_history_entry(self, history_entry_id : str):
-        self._repository.delete_history_by_id(history_entry_id)
+        self._repository.delete(history_entry_id)
         event_bus.publish(self.HISTORY_ENTRY_DELETED, {HistoryEntryData.ENTRY_ID : history_entry_id})
 
     @property
@@ -67,7 +67,7 @@ class HistoryService :
         return self._repository
 
     def add_history_entry(self, history_entry : HistoryEntryData):
-        self.repository.add_history(history_entry.to_dict())
+        self.repository.add(history_entry.to_dict())
         #
         event_bus.publish(self.HISTORY_ENTRY_ADDED, history_entry.to_dict())
 
@@ -84,16 +84,16 @@ class HistoryService :
         if not isinstance(provider, HistoryProvider):
             raise TypeError(f"The provider must be type of HistoryProvider. The Actual is {type(provider)}")
         #
-        return self.repository.provider_history_count(provider.provider_key)
+        return self.repository.get_provider_count(provider.provider_key)
 
     def get_all_history_count(self):
-        return self.repository.count_all_history()
+        return self.repository.count()
 
     def get_provider_history(self, provider : HistoryProvider, offset : int = 0, limit : int |  None = None):
         if not isinstance(provider, HistoryProvider) :
             raise TypeError(f"The provider must be type of HistoryProvider. The Actual is {type(provider)}")
         #
-        datas = self.repository.get_provider_history(provider.provider_key, offset, limit)
+        datas = self.repository.get_by_provider(provider.provider_key, offset, limit)
         #
         return [provider.deserialize_entry_data(data) for data in datas]
 

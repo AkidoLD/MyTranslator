@@ -11,8 +11,6 @@ class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
         #
-        Style().theme_use("clam")
-        #
         self.title("MyTranslator")
         self.geometry("580x820")
         self.minsize(470, 450)
@@ -32,7 +30,7 @@ class MainWindow(tk.Tk):
 
     @property
     def provider_combobox(self):
-        return self._top_bar.api_selector
+        return self._top_bar.provider_selector
 
     @property
     def translation_frame(self):

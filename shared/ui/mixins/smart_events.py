@@ -2,8 +2,6 @@ from tkinter import Widget, Event, EventType, Label, Tk, Frame, Button, Entry
 
 from typing import TypeVar, Self
 
-from sympy import false
-
 T = TypeVar("T", bound=Widget)
 
 

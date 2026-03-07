@@ -4,7 +4,7 @@ from tkinter import Event, StringVar
 from tkinter.ttk import Combobox
 from typing import List
 
-
+from history.infra.persitance.json_history_repository import JsonHistoryRepository
 from history.infra.providers.fake_history_repository import FakeHistoryRepository
 from history.application.services.history_service import HistoryService
 from history.ui.history_frame import HistoryFrame
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     root = tkinter.Tk()
     root.geometry("500x400")
 
-    repo = FakeHistoryRepository()
+    repo = JsonHistoryRepository(".history.test.json")
     fake_trans_hist : List[TranslationHistoryEntry]= [
         TranslationHistoryEntry(None, f"Traduction {i}", f"Translation {i}", "fr", "en", None) for i in range(1, 20)]
     #

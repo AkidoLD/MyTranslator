@@ -21,7 +21,7 @@ class _NoProviderWidget(tkinter.Frame, TkDialogService):
 
 class ProviderListFrame(Frame):
     _ADD_IMG_PATH = os.path.join(os.path.dirname(__file__), "../../resources/icons8-plus-math-100.png")
-    _REFRESH_IMG_PATH = os.path.join(os.path.dirname(__file__), "../../resources/icons8-restart-100.png")
+    _REFRESH_IMG_PATH = os.path.join(os.path.dirname(__file__), "../../resources/icons8-synchronize-100.png")
 
     def __init__(
             self,
@@ -37,8 +37,8 @@ class ProviderListFrame(Frame):
         #
         self._provider_count = 0
         #
-        self._add_img = ImageUtils.get_tk_image(self._ADD_IMG_PATH, (35, 35))
-        self._refresh_img = ImageUtils.get_tk_image(self._REFRESH_IMG_PATH, 18)
+        self._add_img = ImageUtils.get_tk_image(self._ADD_IMG_PATH, 35)
+        self._refresh_img = ImageUtils.get_tk_image(self._REFRESH_IMG_PATH, 22)
         #
         self._configure_styles()
         self._build_ui()
@@ -73,7 +73,7 @@ class ProviderListFrame(Frame):
         option_pane = Frame(self, style="OptionPane.TFrame")
         option_pane.pack(side="top", anchor="e")
         #
-        self._refresh_btn = Button(option_pane, image=self._refresh_img, command=self._handler_refresh, padding=(2, 0))
+        self._refresh_btn = Button(option_pane, image=self._refresh_img, command=self._handler_refresh, padding=(2, 0), cursor="hand2")
         self._refresh_btn.pack(side="left", padx=(0, 5), fill='both')
         #
         self._search_bar = SearchBar(option_pane, background="white", font=("Ubuntu", 14), placeholder="Rechercher ...")

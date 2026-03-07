@@ -5,6 +5,7 @@ from app.services.app_service import AppService
 from app.ui.about_frame import AboutFrame
 from app.ui.main_window import MainWindow
 from history.controllers.history_controller import HistoryController
+from history.infra.persitance.json_history_repository import JsonHistoryRepository
 from history.infra.providers.fake_history_repository import FakeHistoryRepository
 from history.application.services.history_service import HistoryService
 from translation.controllers.translation_controller import TranslationController
@@ -19,8 +20,8 @@ class Application:
 
     def __init__(self):
         #Init repositories
-        self.trans_provider_repo = JsonTranslationProviderRepository("t_provider_repo.json")
-        self.history_repo = FakeHistoryRepository()
+        self.trans_provider_repo = JsonTranslationProviderRepository(".trans_provider.json")
+        self.history_repo = JsonHistoryRepository('.history.json')
 
         #Init services
         self.trans_service = TranslationService(self.trans_provider_repo)

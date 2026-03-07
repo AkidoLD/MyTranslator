@@ -5,8 +5,7 @@ from shared.infra.events.event_bus import event_bus
 from shared.infra.events.events import TranslationEvents
 from shared.infra.utils.validation_utils import validate_type
 from translation.domain.models.translation_provider import TranslationRequest, TranslationProvider
-from translation.domain.exceptions.translation_error import TranslationTimeOutError, \
-    ProviderUnavailableError, UnsupportedLanguageError, TranslationError
+from translation.domain.exceptions.translation_error import TranslationError
 from translation.domain.models.translation_result import TranslationResult
 from translation.domain.repositories.translation_provider_repository import TranslationProviderRepository
 from translation.application.factories.translation_provider_factory import TranslationProviderFactory
@@ -60,7 +59,7 @@ class TranslationService:
         self._provider_repo.exist(provider_id)
 
     def get_provider(self, provider_id) -> TranslationProvider:
-        provider_data = self._provider_repo.get(provider_id)
+        provider_data = self._provider_repo.get_provider(provider_id)
         return TranslationProviderFactory.create_from_dict(provider_data) if provider_data else None
 
     def update_provider(self, provider_id : str, changes : Dict[str, Any]):
@@ -69,7 +68,7 @@ class TranslationService:
 
     def find_provider_by_name(self, name : str) -> Iterable[TranslationProvider]:
         return [TranslationProviderFactory.create_from_dict(provider)
-                for provider in self._provider_repo.find_by_name(name)]
+                for provider in self._provider_repo.find_provider_by_name(name)]
 
     def clear_provider(self):
         self._provider_repo.clear()
@@ -77,8 +76,9 @@ class TranslationService:
 
     @property
     def active_provider(self) -> TranslationProvider | None:
-        p_data = self._provider_repo.get_active_provider()
-        return TranslationProviderFactory.create_from_dict(p_data) if p_data else None
+        p_id = self._provider_repo.get_active_provider()
+        if not p_id : return None
+        return TranslationProviderFactory.create_from_dict(self._provider_repo.get_provider(p_id))
 
     @active_provider.setter
     def active_provider(self, provider_id : str):
@@ -88,7 +88,7 @@ class TranslationService:
     @property
     def providers(self):
         return [TranslationProviderFactory.create_from_dict(provider)
-                for provider in self._provider_repo.get_all()]
+                for provider in self._provider_repo.get_providers()]
 
     @providers.setter
     def providers(self, providers : list[TranslationProvider]):

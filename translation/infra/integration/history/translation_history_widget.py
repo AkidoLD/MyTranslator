@@ -1,7 +1,7 @@
 import os
 import tkinter
 from datetime import datetime
-from tkinter import Frame, Misc, font, Button
+from tkinter import Frame, Misc
 from tkinter.ttk import Label, Style
 
 

@@ -4,7 +4,7 @@ from typing import Any, Dict, Iterable
 
 class TranslationProviderRepository(ABC):
     @abstractmethod
-    def get_active_provider(self) -> Dict[str, Any] | None : pass
+    def get_active_provider(self) -> str | None : pass
 
     @abstractmethod
     def set_active_provider(self, provider_id : str) : pass
@@ -13,16 +13,19 @@ class TranslationProviderRepository(ABC):
     def add(self, provider_data : Dict[str, Any]): pass
 
     @abstractmethod
-    def get(self, provider_id : str) -> Dict[str, Any] | None: pass
+    def get_provider(self, provider_id : str) -> Dict[str, Any] | None: pass
 
     @abstractmethod
-    def get_by(self, attr_name : str, value) -> Iterable[Dict[str, Any]]: pass
+    def get_provider_by(self, attr_name : str, value) -> Iterable[Dict[str, Any]]: pass
 
     @abstractmethod
-    def find_by_name(self, provider_name : str) -> Iterable[Dict[str, Any]] : pass
+    def find_provider_by_name(self, provider_name : str) -> Iterable[Dict[str, Any]] : pass
 
     @abstractmethod
     def get_all(self) -> Iterable[Dict[str, Any]]: pass
+
+    @abstractmethod
+    def get_providers(self) -> Iterable[Dict[str, Any]]: pass
 
     @abstractmethod
     def update(self, provider_id : str, changes : Dict[str, Any]): pass
@@ -37,7 +40,7 @@ class TranslationProviderRepository(ABC):
     def len(self) -> int: pass
 
     def is_empty(self) -> bool:
-        return not any(self.get_all())
+        return not any(self.get_providers())
 
     @abstractmethod
     def clear(self): pass

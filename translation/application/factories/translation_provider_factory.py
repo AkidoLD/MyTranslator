@@ -19,7 +19,7 @@ class TranslationProviderFactory:
 
     @classmethod
     def create_from_dict(cls, data: dict) -> TranslationProvider:
-        provider_type = data.get("type")
+        provider_type = data.get(TranslationProvider.KEY_TYPE)
         if not provider_type:
             raise ValueError("Missing 'type' field in provider data")
 

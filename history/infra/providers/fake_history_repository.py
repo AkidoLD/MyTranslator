@@ -12,7 +12,7 @@ class FakeHistoryRepository(HistoryRepository):
         self._data_map["active_provider"] = None
         #
 
-    def get_active_provider_key(self) -> str:
+    def get_active_provider(self) -> str:
         return self._data_map["active_provider"]
 
     def add_history(self, data: dict):

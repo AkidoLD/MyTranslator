@@ -31,8 +31,8 @@ class TranslationFrame(Frame, TkDialogService):
         #
         self._details_frame = Frame(self)
         #trans_frame content
-        self._left_entry = TranslationEntry(self._trans_frame, border= 1)
-        self._right_entry = TranslationEntry(self._trans_frame,border= 1)
+        self._left_entry = TranslationEntry(self._trans_frame)
+        self._right_entry = TranslationEntry(self._trans_frame)
         self._change_lang = Frame(self._trans_frame)
         #
         self._top_lang = Combobox(self._change_lang, width=10, font=("Ubuntu", 12, "bold"), state="readonly")

@@ -12,9 +12,9 @@ from shared.ui.components.stack_frame import StackFrame
 
 
 class MenuStackButton(Frame):
-    _PLUS_IMG_PATH = os.path.join(os.path.dirname(__file__), "../../resources/icons8-plus-math-100.png")
-    _MINUS_IMG_PATH = os.path.join(os.path.dirname(__file__), "../../resources/icons8-minus-100-4.png")
-    _IMG_SIZE = (20, 20)
+    _PLUS_IMG_PATH = os.path.join(os.path.dirname(__file__), "../../resources/icons8-plus-math-2-100.png")
+    _MINUS_IMG_PATH = os.path.join(os.path.dirname(__file__), "../../resources/icons8-subtract-100.png")
+    _IMG_SIZE = 22
     #
     _EMPTY_STYLE = "Empty.MenuStackButton.TButton"
     _NOT_EMPTY_STYLE = "NoEmpty.MenuStackButton.TButton"
@@ -96,7 +96,7 @@ class MenuStackButton(Frame):
         return len(self._items_pane.winfo_children())
 
     def _show_toggle_btn(self):
-        self._toggle_btn.grid(row=0, column=1, sticky="nswe")
+        self._toggle_btn.grid(row=0, column=1, sticky="nswe", padx=1)
 
     def _hide_toggle_btn(self):
         self._toggle_btn.grid_forget()

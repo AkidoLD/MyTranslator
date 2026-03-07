@@ -3,14 +3,16 @@ from tkinter import Misc
 from history.domain.interfaces.history_entry_data import HistoryEntryData
 from history.domain.interfaces.history_entry_widget import HistoryEntryWidget
 from history.domain.interfaces.history_provider import HistoryProvider
-from translation.infra.integration.history.constants import TRANS_PROVIDER_KEY
 from translation.infra.integration.history.translation_history_entry import TranslationHistoryEntry
 from translation.infra.integration.history.translation_history_widget import TranslationHistoryWidget
 
 
 class TranslationHistoryProvider(HistoryProvider):
     def __init__(self):
-        super().__init__(TRANS_PROVIDER_KEY, "Traduction")
+        super().__init__("Traduction")
+
+    def get_key(self) -> str:
+        return TranslationHistoryEntry.get_key()
 
     def deserialize_entry_data(self, data: dict) -> HistoryEntryData:
         return TranslationHistoryEntry.from_dict(data)
