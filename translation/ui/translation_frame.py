@@ -1,24 +1,34 @@
 import os
 import tkinter as tk
-from tkinter import Frame, Button
-from tkinter.ttk import Combobox, Label
+from tkinter import Frame
+from tkinter.ttk import Combobox, Label, Button, Style
 
+from shared.infra.services.tk_dialog_service import TkDialogService
 from shared.infra.utils.image_utils import ImageUtils
 from shared.ui.components.scroll_pane import ScrollPane
 from translation.ui.components.translation_entry import TranslationEntry
 
 
-class TranslationFrame(Frame):
+class TranslationFrame(Frame, TkDialogService):
     _TRANSLATION_BT_IMG_PATH = os.path.join(os.path.dirname(__file__), "../resources/icons8-translate-100.png")
 
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
         #
-        self._trans_bt_img = ImageUtils.convert_to_tk_image(
-            ImageUtils.get_image(self._TRANSLATION_BT_IMG_PATH, (40, 40)))
+        self._trans_bt_img = ImageUtils.get_tk_image(self._TRANSLATION_BT_IMG_PATH, 35)
         #
         self._trans_frame = Frame(self)
-        self._trans_bt = Button(self, text="Traduire", image=self._trans_bt_img, compound="left", font=("Ubuntu", 20, "bold"), cursor="hand2")
+        self._trans_bt = Button(
+            self,
+            text="Traduire",
+            image=self._trans_bt_img,
+            compound="left",
+            style="TranslationBtn.TranslationFrame.TButton",
+            cursor="hand2",
+            width=0,
+            takefocus=0
+        )
+        #
         self._details_frame = Frame(self)
         #trans_frame content
         self._left_entry = TranslationEntry(self._trans_frame, border= 1)
@@ -38,7 +48,7 @@ class TranslationFrame(Frame):
 
         #Pack items of self
         self._trans_frame.pack(side="top", fill="x", pady=2, padx=2)
-        self._trans_bt.pack(side="top", anchor="ne", pady=1, padx=2)
+        self._trans_bt.pack(side="top", anchor="ne", pady=4, padx=2)
         self._details_frame.pack(side="top", fill="both", expand=True, pady=2, padx=2)
 
         #Pack items of trans_frame
@@ -60,6 +70,28 @@ class TranslationFrame(Frame):
         self._details_content_scroll.pack(fill="both", expand=True, pady=1)
         self._details_title_lb.pack(side="left", padx=4)
         self._details_count_lb.pack(side="left", padx= 5)
+
+        #
+        self._set_style()
+
+    @staticmethod
+    def _set_style():
+        Style().configure(
+            "TranslationBtn.TranslationFrame.TButton",
+            background="white",
+            font=("Ubuntu", 20, "bold"),
+            space=10,
+            padding=10,
+        )
+        #
+        # Style().map(
+        #     "TranslationBtn.TranslationFrame.TButton",
+        #     background=[
+        #         # ("disabled", "#f1f1f1"),
+        #         ("pressed", "#00d400"),
+        #         ("active", "#e1e84f")
+        #     ]
+        # )
 
     @property
     def left_entry(self):
@@ -98,5 +130,5 @@ if __name__ == "__main__":
 
     frame = TranslationFrame(root)
     frame.pack(fill="both", expand=True, padx=10, pady=10)
-
+    Style().layout("TButton")
     root.mainloop()

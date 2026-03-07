@@ -3,6 +3,7 @@ import tkinter
 from tkinter.ttk import Frame, Button, Label, Style
 from typing import Callable, List
 
+from shared.infra.services.tk_dialog_service import TkDialogService
 from shared.infra.utils.image_utils import ImageUtils
 from shared.infra.utils.validation_utils import validate_callable, validate_type
 from shared.ui.components.scroll_pane import ScrollPane
@@ -10,7 +11,7 @@ from shared.ui.components.search_bar import SearchBar
 from translation.ui.components.trans_provider_data import TransProviderData
 from translation.ui.components.trans_provider_widget import TransProviderWidget
 
-class _NoProviderWidget(tkinter.Frame):
+class _NoProviderWidget(tkinter.Frame, TkDialogService):
     def __init__(self, master, **kwargs):
         super().__init__(master, height=35, bd=2, relief='solid', cursor='hand2', **kwargs)
         #

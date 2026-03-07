@@ -1,27 +1,19 @@
 import tkinter
-from typing import List
+from typing import Iterable
 from tkinter import messagebox
 
-
+from shared.infra.utils.validation_utils import validate_type
 from translation.domain.models.translation_provider import TranslationProvider
 from translation.infra.persistance.json_translation_provider_repository import JsonTranslationProviderRepository
-from translation.services.translation_service import TranslationService
+from translation.application.services.translation_service import TranslationService
 from translation.ui.components.trans_provider_data import TransProviderData
 from translation.ui.setting.provider_list_frame import ProviderListFrame
 
 
-class TranslationProviderListController:
-    def __init__(self, trans_provider_list_frame : ProviderListFrame, translation_service : TranslationService):
-        if not isinstance(translation_service, TranslationService):
-            raise TypeError(f"trans_service must be TranslationService, got type {type(trans_provider_list_frame).__name__}")
-        #
-        if not isinstance(trans_provider_list_frame, ProviderListFrame):
-            raise TypeError(
-                f"trans_provider_list_frame must be ProviderListFrame, got type {type(trans_provider_list_frame).__name__}"
-            )
-        #
-        self._trans_service = translation_service
-        self._trans_provider_list_frame = trans_provider_list_frame
+class ProviderListController:
+    def __init__(self, translation_service : TranslationService, provider_list_frame : ProviderListFrame):
+        self._trans_service = validate_type(translation_service, TranslationService, "translation_service")
+        self._trans_provider_list_frame = validate_type(provider_list_frame, ProviderListFrame, "provider_list_frame")
         #
         self._trans_provider_list_frame.on_search = self._on_search
         self._trans_provider_list_frame._on_refresh_btn_clicked = self._on_refresh_btn_clicked
@@ -29,7 +21,7 @@ class TranslationProviderListController:
         #
         self._display_all_provider()
 
-    def _display_providers(self, providers : List[TranslationProvider]):
+    def _display_providers(self, providers : Iterable[TranslationProvider]):
         providers = [TransProviderData(
             provider.id,
             provider.name,
@@ -40,12 +32,15 @@ class TranslationProviderListController:
         #
         self._trans_provider_list_frame.set_providers(providers)
 
+    def refresh_content(self):
+        self._trans_provider_list_frame.clear_search_bar()
+        self._display_all_provider()
+
     def _display_all_provider(self):
         self._display_providers(self._trans_service.providers)
 
     def _on_refresh_btn_clicked(self):
-        self._trans_provider_list_frame.clear_search_bar()
-        self._display_all_provider()
+        self.refresh_content()
 
     def _on_delete_btn_clicked(self, provider_id):
         provider =  self._trans_service.get_provider(provider_id)
@@ -58,9 +53,7 @@ class TranslationProviderListController:
 
     def _on_search(self, value : str):
         if not isinstance(value, str) : return
-        #
-        providers = [provider for provider in self._trans_service.providers if value.lower() in provider.name.lower()]
-        self._display_providers(providers)
+        self._display_providers(self._trans_service.find_provider_by_name(value))
 
 
 if __name__ == "__main__":
@@ -77,10 +70,10 @@ if __name__ == "__main__":
     )
 
     #
-    provider_repo = JsonTranslationProviderRepository("../../tmp_api_config.json")
+    provider_repo = JsonTranslationProviderRepository("../../../tmp_api_config.json")
     trans_service = TranslationService(provider_repo)
     #
-    control = TranslationProviderListController(frame, trans_service)
+    control = ProviderListController(trans_service, frame)
     #
     frame.pack(fill="both", expand=True)
 

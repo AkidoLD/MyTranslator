@@ -2,12 +2,12 @@ import tkinter as tk
 from tkinter import Event
 
 from shared.infra.events.event_bus import event_bus
-from shared.infra.events.events import TranslationEvents
 from shared.ui.components.advanced_entry import AdvancedEntry
 from translation.domain.exceptions.translation_error import TranslationTimeOutError, TranslationError, \
     ProviderUnavailableError, UnsupportedLanguageError
+from translation.domain.models.translation_provider import TranslationProvider
 from translation.infra.persistance.json_translation_provider_repository import JsonTranslationProviderRepository
-from translation.services.translation_service import TranslationService
+from translation.application.services.translation_service import TranslationService
 from translation.ui.components.translation_entry import TranslationEntry
 from translation.ui.components.translation_detail_widget import TranslationDetailWidget
 from translation.ui.translation_frame import TranslationFrame
@@ -51,7 +51,7 @@ class TranslationController:
         self._focused_entry.bind(TranslationEntry.SMART_FOCUS_IN, self._on_translation_entry_focused)
         self._unfocused_entry.bind(TranslationEntry.SMART_FOCUS_IN, self._on_translation_entry_focused)
         #
-        self._translate_btn.bind("<Button-1>", self._on_translate_btn_clicked)
+        self._translate_btn.config(command=self._on_translate_btn_clicked)
         #
         self._focused_entry.entry.bind(AdvancedEntry.TEXT_CHANGED, lambda _ : self._check_translation_fields())
         self._unfocused_entry.entry.bind(AdvancedEntry.TEXT_CHANGED, lambda _ : self._check_translation_fields())
@@ -63,7 +63,9 @@ class TranslationController:
         self._focused_entry.entry.bind("<Return>", self._on_translation_entry_enter)
         self._unfocused_entry.entry.bind("<Return>", self._on_translation_entry_enter)
         #
-        event_bus.subscribe(TranslationEvents.PROVIDER_CHANGED, self._on_active_provider_changed)
+        event_bus.subscribe(TranslationService.TRANS_PROVIDER_CHANGED, self._on_active_provider_changed)
+        event_bus.subscribe(TranslationService.TRANS_PROVIDER_REMOVED, self._on_trans_provider_removed)
+        event_bus.subscribe(TranslationService.TRANS_PROVIDER_UPDATE, self._on_trans_provider_update)
 
     def _init_translation_pane(self):
         self._top_combobox.config(justify="center")
@@ -76,19 +78,26 @@ class TranslationController:
         self._load_langages()
         self._check_translation_fields()
 
-    def _on_active_provider_changed(self, data : dict):
-        _ = data.get("provider_key", "")
+    def _on_active_provider_changed(self, _ : dict):
+        self._load_langages()
+        self._check_translation_fields()
+
+    def _on_trans_provider_update(self, data : dict):
+        provider_id = data.get(TranslationProvider.KEY_ID)
+        if not self._trans_service.active_provider or provider_id != self._trans_service.active_provider.id : return
         #
+        self._load_langages()
+        self._check_translation_fields()
+
+    def _on_trans_provider_removed(self, _ : dict):
         self._load_langages()
         self._check_translation_fields()
 
     def _load_langages(self):
         provider = self._trans_service.active_provider
-        if not provider :
-            print("No provider set. Selection one before.")
-            return
+        if not provider : print("No provider set. Selection one before.")
         #
-        values = tuple(provider.languages.keys())
+        values = tuple(provider.languages.keys()) if provider else ()
         #
         self._focused_entry.combobox["values"] = values
         self._unfocused_entry.combobox["values"] = values
@@ -101,19 +110,24 @@ class TranslationController:
 
     def _check_translation_fields(self):
         is_valid = True
-        languages =  self._trans_service.active_provider.languages
-        detect_src = self._trans_service.active_provider.detect_src_lang
+        provider = self._trans_service.active_provider
         #
-        if not self._focused_entry.text : is_valid = False
-        if not  detect_src and self._focused_entry.combobox.get() not in languages: is_valid = False
-        if self._unfocused_entry.combobox.get() not in languages : is_valid = False
+        if not provider :
+            is_valid = False
+        else :
+            languages =  provider.languages
+            detect_src = self._trans_service.active_provider.detect_src_lang
+            #
+            if not self._focused_entry.text : is_valid = False
+            if not  detect_src and self._focused_entry.combobox.get() not in languages: is_valid = False
+            if self._unfocused_entry.combobox.get() not in languages : is_valid = False
         #
         self._translate_btn.config(state="normal" if is_valid else "disabled")
         #
         return is_valid
 
     def _on_translation_entry_enter(self, _ : Event):
-        self._trans_frame.after(0, self._perform_translation, )
+        self._perform_translation()
 
     def _on_translation_entry_focused(self, event : Event):
         if not isinstance(event, Event) :
@@ -171,35 +185,25 @@ class TranslationController:
             result = self._trans_service.translate(text, dest_lang, src_lang)
             self._unfocused_entry.text = result.translated
             # show details
-            self._display_translation_details(result.details)
+            self._trans_frame.after(0, self._display_translation_details, result.details)
             #
-        except TranslationTimeOutError as _:
-            pass
+            # self._display_translation_details(result.details)
+        except (TranslationTimeOutError, ProviderUnavailableError, UnsupportedLanguageError, TranslationError) as e :
+            self._trans_frame.after(
+                0,
+                self._trans_frame.error_dialog,
+                "Échec de traduction",
+                f"Une erreur est survenu lors de la tentative de traduction : \n{str(e)}"
+            )
 
-        except ProviderUnavailableError as _ :
-            pass
-
-        except UnsupportedLanguageError as _ :
-            pass
-
-        except TranslationError as _ :
-            pass
-
-    def _on_translate_btn_clicked(self, _ : Event):
+    def _on_translate_btn_clicked(self):
         self._trans_frame.after(0, self._perform_translation, )
 
 if __name__ == "__main__":
     root = tk.Tk()
     root.geometry("500x400")
-
-    # _name_lb = "Trans"
-    # binary = "/home/akido-ld/.local/bin/trans"
-    # args = {"-b": ""}
-    # lang_template = "_current:_target"
-    # #
-    # provider = ExecTranslationApi(None, _name_lb, binary, args, lang_template, {"francais" : "fr", "Anglais" : "en", "Espagnol" : "es"}, True)
-
-    repo = JsonTranslationProviderRepository("api_list.json")
+    #
+    repo = JsonTranslationProviderRepository("../../tmp_api_config.json")
     #
     service = TranslationService(repo)
     #

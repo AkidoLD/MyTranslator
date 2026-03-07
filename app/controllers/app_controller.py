@@ -3,7 +3,8 @@ from tkinter import Event
 from app.services.app_service import AppService
 from app.ui.main_window import MainWindow
 from shared.infra.events.event_bus import event_bus
-from shared.infra.events.events import TranslationEvents
+from translation.application.services.translation_service import TranslationService
+from translation.domain.models.translation_provider import TranslationProvider
 from translation.infra.integration.history.translation_history_entry import TranslationHistoryEntry
 from translation.ui.components.provider_combobox import ProviderComboBox
 
@@ -19,12 +20,12 @@ class AppController:
         self.load_provider_combobox_providers()
         self._provider_combobox.bind(ProviderComboBox.PROVIDER_SELECTED, self._on_api_combobox_selected)
         #
-        event_bus.subscribe(TranslationEvents.COMPLETED, self._on_translation_completed)
+        event_bus.subscribe(TranslationService.TRANS_COMPLETED, self._on_translation_completed)
+        event_bus.subscribe(TranslationService.TRANS_PROVIDER_ADDED, self._on_trans_providers_changed)
+        event_bus.subscribe(TranslationService.TRANS_PROVIDER_REMOVED, self._on_trans_providers_changed)
+        event_bus.subscribe(TranslationService.TRANS_PROVIDER_UPDATE, self._on_trans_providers_changed)
 
     def _on_translation_completed(self, data : dict):
-        if not isinstance(data, dict) :
-            raise TypeError(f"Result must by type of dict, got {type(data).__name__}")
-        #
         history_entry = TranslationHistoryEntry(
             None,
             data.get("original", ""),
@@ -36,18 +37,18 @@ class AppController:
         #
         self._app_service.append_history_entry(history_entry)
 
+    def _on_trans_providers_changed(self, _ : dict):
+        self.load_provider_combobox_providers()
+
     def load_provider_combobox_providers(self):
         self._provider_combobox.values = ((items.id, items.name, items.req_internet) for items in self._app_service.get_app_providers())
-        selected = self._app_service.get_active_provider()
+        selected : TranslationProvider = self._app_service.get_active_provider()
 
         #Display the selected provider
-        if selected and hasattr(selected, "id"):
-            self._provider_combobox.set_selected_provider(selected.id)
+        if selected : self._provider_combobox.set_selected_provider(selected.id)
 
     def _on_api_combobox_selected(self, event : Event):
         widget : ProviderComboBox = event.widget
-        if not isinstance(widget, ProviderComboBox):
-            raise TypeError("")
         #
         provider_id = widget.get()
         self._app_service.set_active_provider(provider_id)

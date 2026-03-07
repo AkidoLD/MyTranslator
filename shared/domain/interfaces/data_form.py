@@ -8,13 +8,13 @@ from shared.infra.utils.validation_utils import validate_type, validate_callable
 class DataForm(ABC):
     def __init__(
             self,
-            read_only : bool = False,
             on_field_changed : Callable[[str, Any], None] = None
     ):
         #
-        self._is_read_only = read_only
         self._form_fields : Dict[str, FormField] = {}
         self.on_field_changed = on_field_changed
+        #
+        self._readonly = False
 
     def _field_exist(self, name) -> bool:
         return name in self._form_fields
@@ -57,20 +57,27 @@ class DataForm(ABC):
         #
         self._form_fields[name].set(value)
 
-    def is_read_only(self) -> bool:
-        return self._is_read_only
-
-    def read_only(self, value : bool):
-        if value == self._is_read_only : return
+    def set_readonly(self, value : bool):
+        if value == self._readonly : return
         #
-        self._is_read_only = value
-        for field in self._form_fields.values():
-            field.disable() if value else field.enable()
+        self._readonly = validate_type(value, bool, "readonly")
+        for field in self._form_fields.values(): field.readonly = value
 
-    def change_field_state(self, name, value : bool):
+    def get_readonly(self) -> bool:
+        return self._readonly
+
+    @property
+    def readonly(self) -> bool:
+        return self.get_readonly()
+
+    @readonly.setter
+    def readonly(self, value : bool):
+        self.set_readonly(value)
+
+    def set_field_readonly(self, name, value : bool):
         field = self._get_form_field(name)
         #
-        field.disable() if value else field.enable()
+        field.readonly = value
 
     def reset(self):
         for field in self._form_fields.values() : field.reset()
@@ -88,4 +95,3 @@ class DataForm(ABC):
     @on_field_changed.setter
     def on_field_changed(self, value : Callable[[str, Any], None]):
         self._on_field_changed = validate_callable(value, "on_field_changed")
-

@@ -2,7 +2,7 @@ import tkinter
 import uuid
 from tkinter import Button
 from tkinter.ttk import Frame, Label, Style
-from typing import Callable, Tuple
+from typing import Tuple, Any, Callable
 
 from shared.domain.interfaces.data_form import DataForm
 from shared.domain.interfaces.form_field import FormField
@@ -26,15 +26,16 @@ class ProviderBasicDataForm(Frame, DataForm, FormField):
             self,
             master,
             name,
-            read_only = False,
             font : Tuple[str, int] | Tuple[str, int, str] = ("", 11),
+            on_type_field_changed : Callable[[str], None] = None,
             **kwargs
     ):
         Frame.__init__(self, master, **kwargs)
         FormField.__init__(self, name)
-        DataForm.__init__(self, read_only)
+        DataForm.__init__(self)
         #
         self._font = font
+        self.on_type_field_changed = on_type_field_changed
         #
         self._build_ui()
         self._reg_form_fields()
@@ -61,6 +62,7 @@ class ProviderBasicDataForm(Frame, DataForm, FormField):
             read_only=True,
             style="EntryField.ProviderBasicDataForm.TEntry",
             font=self._font,
+            required=False
         )
         #
         self._provider_name_entry = EntryField(
@@ -105,9 +107,7 @@ class ProviderBasicDataForm(Frame, DataForm, FormField):
             to_ = 30,
             font=self._font
         )
-        #
-        self._provider_languages_count_lb = Label(self, style="TitleLabel.ProviderBasicDataForm.TLabel", text="(0)")
-        self._provider_languages_widget = DictView(self, self.PROVIDER_LANGUAGES_FIELD, key_name="Nom",
+        self._provider_languages_widget = DictView(self, "Langues", self.PROVIDER_LANGUAGES_FIELD, key_name="Nom",
                                                    value_name="Sigle", font=self._font)
         #
         Label(
@@ -132,9 +132,7 @@ class ProviderBasicDataForm(Frame, DataForm, FormField):
         Label(self, style="TitleLabel.ProviderBasicDataForm.TLabel", text="Durée d'une traduction").grid(row=8, column=0, sticky='nswe')
         self._provider_timeout_spin.grid(row=9, column=0, sticky='nswe')
         #
-        Label(self, style="TitleLabel.ProviderBasicDataForm.TLabel", text="Langues").grid(row=0, column=1, sticky='nswe', padx=2)
-        self._provider_languages_count_lb.grid(row=0, column=2, sticky="nsw")
-        self._provider_languages_widget.grid(row=1, column=1, rowspan=9, columnspan=2, sticky='nswe')
+        self._provider_languages_widget.grid(row=0, column=1, rowspan=10, columnspan=2, sticky='nswe')
         #
         self.grid_columnconfigure(0, weight=1, uniform='group')
         self.grid_columnconfigure(2, weight=1, uniform='group')
@@ -165,19 +163,33 @@ class ProviderBasicDataForm(Frame, DataForm, FormField):
         )
 
     def _bind_events(self):
-        self.on_changed = self.on_field_changed
-        self._provider_languages_widget.on_changed = lambda c : self._provider_languages_count_lb.config(text=f"({c})")
+        pass
 
-    def enable(self):
-        self.read_only(False)
+    def _handler_on_field_changed(self, name : str, value : Any):
+        if name == self.PROVIDER_TYPE_FIELD : self._handler_on_type_field_changed()
+        self._handler_on_changed()
+        super()._handler_on_field_changed(name, value)
 
-    def disable(self):
-        self.read_only(True)
+    def _enable(self):
+        self.readonly = False
 
-    def read_only(self, value : bool):
-        super().read_only(value)
-        self._provider_id_entry.disable()
+    def _disable(self):
+        self.readonly = True
 
+    def set_readonly(self, value):
+        DataForm.set_readonly(self, value)
+        self._provider_id_entry.readonly = True
+
+    @property
+    def on_type_field_changed(self) -> Callable[[str], None]:
+        return self._on_type_field_changed
+
+    @on_type_field_changed.setter
+    def on_type_field_changed(self, value : Callable[[str], None]):
+        self._on_type_field_changed = validate_callable(value, "on_type_field_changed")
+
+    def _handler_on_type_field_changed(self):
+        if self.on_type_field_changed : self.on_type_field_changed(self._provider_type_combobox.get())
 
 if __name__ == "__main__":
     root = tkinter.Tk()
@@ -186,12 +198,12 @@ if __name__ == "__main__":
     central.on_field_changed = lambda n, v : print(f"Field {n} changed to value : {v}")
     central.pack(fill="both", expand=True, padx=2, pady=2)
     Button(root, text="Récupérer donnees",command=lambda : print(central.get())).pack(side='bottom', fill='x')
-    central.set_field("provider_id", uuid.uuid4())
+    central.set_field("provider_id", str(uuid.uuid4()))
     central.on_provider_type_field_changed = lambda value : print(f"La nouvelle valeur est {value}")
     central.set_field(ProviderBasicDataForm.PROVIDER_LANGUAGES_FIELD, {"Francais" : "fr", "Anglais" : "en"})
     central.set_field(ProviderBasicDataForm.PROVIDER_TYPE_VALUES_FIELD, ("http", "binary", "lib"))
-    root.after(5000, central.read_only, True)
-    root.after(10000, central.read_only, False)
+    root.after(5000, central.set_readonly, True)
+    root.after(10000, central.set_readonly, False)
     print(Style().layout("TEntry"))
     print(Style().element_options("TEntry.field"))
     root.mainloop()

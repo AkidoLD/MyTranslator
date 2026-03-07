@@ -1,7 +1,6 @@
 from history.domain.interfaces.history_entry_data import HistoryEntryData
-from history.domain.interfaces.history_repository import HistoryRepository
-from history.services.history_service import HistoryService
-from translation.services.translation_service import TranslationService
+from history.application.services.history_service import HistoryService
+from translation.application.services.translation_service import TranslationService
 
 
 class AppService:

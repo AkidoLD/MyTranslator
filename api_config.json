@@ -1,32 +1,38 @@
-[
-  {
-    "id": "e34878c5-99cc-4455-aa89-739aef396289",
-    "name": "Trans",
-    "binary": "/home/akido-ld/.local/bin/trans",
-    "type": "exec",
-    "args": {
-      "-b": ""
+{
+  "active_provider": "4a47cf0c-ba06-4b79-b73a-de4ca638e2a1",
+  "provider_list": [
+    {
+      "id": "e34878c5-99cc-4455-aa89-739aef396289",
+      "name": "ArgoTranslate",
+      "binary": "/usr/bin/trans",
+      "type": "exec",
+      "args": {
+        "-b": ""
+      },
+      "lang_template": "@src_lang:@target_lang",
+      "req_internet": true,
+      "languages": {
+        "Francais": "fr",
+        "Anglais": "en",
+        "Espagnol": "es",
+        "Hindu": "hi",
+        "Japonais": "ja",
+        "Allemand": "de",
+        "Russe": "ru",
+        "Italien": "it"
+      },
+      "detect_src_lang": true,
+      "timeout": 5.0
     },
-    "lang_template": "@src_lang:@target_lang",
-    "req_internet": true,
-    "languages": {
-      "francais": "fr",
-      "anglais": "en",
-      "espagnol": "es",
-      "hindu": "hi",
-      "japonais": "ja"
+    {
+      "id": "ee096f51-b6de-4215-bd3f-6a37f179f136",
+      "name": "AkiLate",
+      "type": "fake"
     },
-    "detect_src_lang": true,
-    "timeout": 5.0
-  },
-  {
-    "id": "ee096f51-b6de-4215-bd3f-6a37f179f136",
-    "name": "AkiLate",
-    "type": "fake"
-  },
-  {
-    "id": "4a47cf0c-ba06-4b79-b73a-de4ca638e2a1",
-    "name": "FakeApi",
-    "type": "fake"
-  }
-]
+    {
+      "id": "4a47cf0c-ba06-4b79-b73a-de4ca638e2a1",
+      "name": "FakeApi",
+      "type": "fake"
+    }
+  ]
+}

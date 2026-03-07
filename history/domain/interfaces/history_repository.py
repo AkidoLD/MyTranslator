@@ -13,15 +13,11 @@ class HistoryRepository(ABC):
         pass
 
     @abstractmethod
-    def add_history_list(self,  history_list : Iterable[Dict]):
-        pass
-
-    @abstractmethod
     def delete_history_by_id(self, history_id : str):
         pass
 
     @abstractmethod
-    def count_history_by_provider(self, provider_key : str) -> int:
+    def provider_history_count(self, provider_key : str) -> int:
         pass
 
     @abstractmethod
@@ -29,7 +25,7 @@ class HistoryRepository(ABC):
         pass
 
     @abstractmethod
-    def history_of_provider_is_empty(self, provider_key) -> bool:
+    def provider_history_is_empty(self, provider_key) -> bool:
         pass
 
     @abstractmethod
@@ -37,7 +33,7 @@ class HistoryRepository(ABC):
         pass
 
     @abstractmethod
-    def get_history_by_provider(self, provider_key : str, offset : int = 0, limit : int | None = None) -> List[Dict]:
+    def get_provider_history(self, provider_key : str, offset : int = 0, limit : int | None = None) -> List[Dict]:
         pass
 
     @abstractmethod

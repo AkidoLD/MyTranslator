@@ -7,7 +7,7 @@ class BottomBar(Frame):
 
     def __init__(self, parent):
         super().__init__(parent)
-        self.config(bg="white")
+        self.config(bg="white", relief='raised', bd=1)
         #
         self.app_name = Label(self, text="MyTranslator", font=("Ubuntu", 12, "bold"), background=self["bg"], foreground="#333")
         self.by_text = Label(self, text="by", font=("Ubuntu", 10), background=self["bg"], foreground="#555")

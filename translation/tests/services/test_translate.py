@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from translation.infra.persistance.fake_translation_provider_repository import FakeTranslationApiRepository
-from translation.services.translation_service import TranslationService
+from translation.application.services.translation_service import TranslationService
 from translation.infra.providers.translation.fake_translation_provider import FakeTranslationApi
 
 

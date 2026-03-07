@@ -28,12 +28,13 @@ class FakeTranslationProvider(TranslationProvider):
 
     def translate(self, request: TranslationRequest) -> TranslationResponse:
         if not request.text:
-            raise TranslationError("An error occurred during the translation")
+            raise TranslationError("An error occurred during the translation. No text to translate.")
+        #
         return TranslationResponse(
-            "faux text",
+            request.text,
             "fake text",
-            "fr",
-            "en",
+            request.source_lang,
+            request.target_lang,
             {
                 f"Faux de details N {i}" : f"details {i}" for i in range(1, 5)
             }

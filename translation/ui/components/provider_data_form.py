@@ -7,9 +7,12 @@ from shared.domain.interfaces.data_form import DataForm
 from shared.infra.utils.validation_utils import validate_type_or_none
 from shared.ui.components.stack_frame import StackFrame
 from shared.ui.components.titled_frame import TitledFrame
-from translation.ui.components.provider_advanced_data_form import ProviderAdvancedDataForm, ExecProviderAdvancedDataForm
+from translation.ui.components.provider_advanced_forms.exec_provider_advanced_data_form import ProviderAdvancedDataForm, ExecProviderAdvancedDataForm
 from translation.ui.components.provider_basic_data_form import ProviderBasicDataForm
 
+class NoProviderAdvancedDataForm(ProviderAdvancedDataForm):
+    def __init__(self, master, name, **kwargs):
+        super().__init__(master, name, **kwargs)
 
 class ProviderDataForm(Frame, DataForm):
     BASIC_DATA_FORM = "provider_basic_data_form"
@@ -27,7 +30,11 @@ class ProviderDataForm(Frame, DataForm):
         self._set_style()
         #
         self.advanced_data_forms = provider_advanced_data_forms or {}
-        self._basic_data_form.on_provider_type_field_changed = self._advanced_data_stack.raise_item
+        self._basic_data_form.on_type_field_changed = self._on_type_changed
+
+    def _on_type_changed(self, _type : str):
+        self._advanced_data_stack.raise_item(_type or "default")
+        self._advanced_data_stack.raised_item.readonly = self.readonly
 
     def _set_advanced_data_forms(self, advanced_forms : Dict[str, Type[ProviderAdvancedDataForm]]):
         if not validate_type_or_none(advanced_forms, dict, "advanced_forms") : return
@@ -37,42 +44,37 @@ class ProviderDataForm(Frame, DataForm):
         #
         self._advanced_data_stack.clear()  # Clear previous advanced forms
         #
+        self._advanced_data_stack.add_item("default", NoProviderAdvancedDataForm, name="default")
         for k, v in advanced_forms.items():
             self._advanced_data_stack.add_item(k, v, name=self.ADVANCED_DATA_FORM)
-        #
-        self._advanced_data_stack.raise_item(keys[0])
 
     def _build_ui(self):
         basic_form_titled_pane =  TitledFrame(self, "Basique")
         self._basic_form_pane = basic_form_titled_pane.pane
         #
-        advanced_form_titled_pane = TitledFrame(self, "Avancé", height=100)
+        advanced_form_titled_pane = TitledFrame(self, "Avancé", pady=1, padx=1)
         self._advanced_form_pane = advanced_form_titled_pane.pane
         self._advanced_data_stack = StackFrame(
             self,
-            on_item_raised=self._on_raised_advanced_form_changed
+            on_item_raised=self._on_raised_advanced_form_changed, padding=1
         )
         #
         self._basic_data_form = ProviderBasicDataForm(self._basic_form_pane, self.BASIC_DATA_FORM)
 
         #
-        basic_form_titled_pane.pack(side='top', fill='x', pady=4)
-        advanced_form_titled_pane.pack(side='top', fill='x', pady=4)
-        self._advanced_data_stack.pack(fill='both', expand=True, padx=2)
+        basic_form_titled_pane.pack(side='top', fill='x', pady=(0, 2))
+        advanced_form_titled_pane.pack(side='top', fill='x', pady=(2, 0))
+        self._advanced_data_stack.pack(fill='both', expand=True)
         #
-        self._basic_data_form.pack(fill='both', expand=True, padx=2)
+        self._basic_data_form.pack(fill='both', expand=True)
         #
         self._set_form_field(self.BASIC_DATA_FORM, self._basic_data_form)
 
     def _set_style(self):
         pass
 
-    def is_valid(self):
-        return self.basic_data_form.is_valid() and self.advanced_data_form.is_valid()
-
-    def _on_raised_advanced_form_changed(self, name):
+    def _on_raised_advanced_form_changed(self, _):
         self._set_form_field(self.ADVANCED_DATA_FORM, self.advanced_data_form)
-        self.basic_data_form.set_field(ProviderBasicDataForm.PROVIDER_TYPE_FIELD, name)
 
     @property
     def basic_data_form(self):
@@ -93,8 +95,10 @@ class ProviderDataForm(Frame, DataForm):
 if __name__ == "__main__":
     root = tkinter.Tk()
     root.geometry("500x500")
-    central = ProviderDataForm(root, {"binary" : ExecProviderAdvancedDataForm})
+    central = ProviderDataForm(root, {"binary" : ExecProviderAdvancedDataForm, "http" : ExecProviderAdvancedDataForm})
+    central.on_field_changed = lambda n, v : print(f"Field {n} changed to : {v}")
     central.pack(fill='both', expand=True)
     central.set_field(ProviderDataForm.BASIC_DATA_FORM,{"provider_id" : "23123asd121"})
+    central.readonly = True
     Button(root, text="get data", command=lambda : print(central.is_valid(), central.get())).pack(side='bottom', fill='x')
     root.mainloop()

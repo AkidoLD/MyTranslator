@@ -26,12 +26,12 @@ class DictViewItem(Frame, FormField):
             value : str = "",
             background : str = None,
             font : str | Tuple[str, int] | Tuple[str, int, str] = None,
+            readonly : bool = False,
             on_delete_btn_clicked : Callable[[str], None] = None,
-            required : bool = False,
             **kwargs
     ):
         Frame.__init__(self, master, style="DictViewItem.TFrame",**kwargs)
-        FormField.__init__(self, key, required)
+        FormField.__init__(self, key, False)
         #
         self._font = font or ("", 11, "bold")
         self._background = background or "#e5e5e5"
@@ -48,6 +48,8 @@ class DictViewItem(Frame, FormField):
         #
         self.key = key
         self.value = value
+        #
+        self.readonly = readonly
 
     def _build_ui(self):
         self._key_label = Label(self, style="Label.DictViewItem.TLabel", anchor='center', font=self._font, padding= 0)
@@ -122,10 +124,10 @@ class DictViewItem(Frame, FormField):
     def get(self) -> tuple :
         return self.key, self.value
 
-    def enable(self):
+    def _enable(self):
         self._delete_btn.configure(state='normal')
 
-    def disable(self):
+    def _disable(self):
         self._delete_btn.configure(state='disabled')
 
     def reset(self):
@@ -137,6 +139,7 @@ class DictView(Frame, DataForm, FormField):
     def __init__(
             self,
             master,
+            title : str,
             name : str = "dict_view",
             key_name : str = "key",
             value_name : str = "value",
@@ -150,8 +153,8 @@ class DictView(Frame, DataForm, FormField):
             **kwargs
     ):
         Frame.__init__(self, master, **kwargs)
+        FormField.__init__(self, name, required, on_changed=on_changed)
         DataForm.__init__(self)
-        FormField.__init__(self, name, required, on_changed)
         #
         self._key_name = key_name
         self._value_name = value_name
@@ -169,18 +172,31 @@ class DictView(Frame, DataForm, FormField):
         self._set_style()
         self._bind_events()
         #
+        self.title = title
+        #
         self._check_fields()
 
     def _build_ui(self):
-        content_scroll = ScrollPane(self)
+        title_pane = Frame(self, style="TitlePane.DictView.TFrame")
+        self._title_lb = Label(
+            title_pane,
+            style='Label.DictView.TLabel',
+            font=(self._font[0], self._font[1] + 1, 'bold')
+        )
         #
+        self._item_count_lb = Label(
+            title_pane,
+            style='Label.DictView.TLabel',
+            font=(self._font[0], self._font[1] + 1, 'bold'),
+            text="(0)"
+        )
+        #
+        content_scroll = ScrollPane(self)
         self._content_pane = content_scroll.pane
         self._content_pane.config(height=50, padx=2, pady=2, background=self._inside_color)
         #
         self._add_value_pane = Frame(self, style='AddValuePane.DictView.TFrame')
-        #
         _entry_pane = Frame(self._add_value_pane, padding=2, style='AddValuePane.DictView.TFrame')
-        #
         self._key_entry = AdvancedEntry(_entry_pane, placeholder=self._key_name, font=self._font,
                                         style="Entry.DictView.TEntry", width=0)
         self._value_entry = AdvancedEntry(_entry_pane, placeholder=self._value_name, font=self._font,
@@ -189,8 +205,14 @@ class DictView(Frame, DataForm, FormField):
         separator = Label(_entry_pane, text=":", style='Label.DictView.TLabel', font=("", 12, 'bold'))
         self._add_value_btn = Button(self._add_value_pane, image=self._add_img,
                                      style="AddBtn.DictView.TButton")
+
+
         #
-        content_scroll.pack(fill='both', expand=True, padx=4, pady=(4, 0))
+        title_pane.pack(side='top', fill='x')
+        self._title_lb.pack(side='left', padx=3)
+        self._item_count_lb.pack(side='left', padx=2)
+        #
+        content_scroll.pack(fill='both', expand=True, padx=2, pady=(2, 0))
         #
         self._add_value_pane.pack(side='bottom', fill='x')
         _entry_pane.pack(side='left', fill='both', expand=True)
@@ -200,8 +222,13 @@ class DictView(Frame, DataForm, FormField):
         self._add_value_btn.pack(side='right', fill='x')
 
     def _set_style(self):
-        self._add_value_pane.configure(padding=(2, 2))
+        self._add_value_pane.configure(padding=1)
         self._add_value_btn.configure(cursor="hand2")
+        #
+        Style().configure(
+            "TitlePane.DictView.TFrame",
+            background=self._outline_color
+        )
         #
         Style(self).configure('Entry.DictView.TEntry', padding=(5, 0), fieldbackground="white")
         Style(self).map(
@@ -232,13 +259,17 @@ class DictView(Frame, DataForm, FormField):
         #
         self._add_value_btn.configure(command=self._on_add_value_btn_clicked)
 
-    def _add_value(self, key: str, value: str):
-        lang_widget = DictViewItem(self._content_pane, key, value, on_delete_btn_clicked=self._remove_value)
+    def _handler_on_changed(self):
+        self._item_count_lb.configure(text=f"({len(self.get())})")
+        super()._handler_on_changed()
+
+    def _add_item(self, key: str, value: str):
+        lang_widget = DictViewItem(self._content_pane, key, value, on_delete_btn_clicked=self._remove_item, readonly=self.readonly)
         lang_widget.pack(side='top', fill='x', pady=2)
         self._check_fields()
         self._handler_on_changed()
 
-    def _remove_value(self, key: str):
+    def _remove_item(self, key: str):
         w = self._get_item(key)
         if not w: return
         w.destroy()
@@ -283,39 +314,55 @@ class DictView(Frame, DataForm, FormField):
         lang_name = self._key_entry.get().strip()
         lang_code = self._value_entry.get().strip()
         #
-        self._add_value(lang_name, lang_code)
+        self._add_item(lang_name, lang_code)
         #
         self._value_entry.text = ""
         self._key_entry.text = ""
         #
         self._check_fields()
 
+    @property
+    def title(self):
+        return self._title_lb.cget('text')
+
+    @title.setter
+    def title(self, value):
+        self._title_lb.configure(text=validate_not_empty(validate_type(value, str, "title"), "title"))
+
     #----- FormField Methods -----------------------------------------------------------
     def set(self, value: Dict[str, str]):
-        for key, value in value.items() :
-            self._add_value(key, value)
+        self.reset()
+        for key, value in value.items() : self._add_item(key, value)
 
     def get(self) -> Dict[str, str]:
         return {w.key : w.value for w in self._get_items()}
 
-    def enable(self):
+    def _enable(self):
         self._add_value_btn.configure(state="normal")
         self._key_entry.configure(state="normal")
         self._value_entry.configure(state="normal")
         #
         self._check_fields()
-        for child in self._get_items(): child.enable()
+        for child in self._get_items(): child.readonly = False
 
-    def disable(self):
+    def _disable(self):
         self._add_value_btn.configure(state="disabled")
         self._key_entry.configure(state="readonly")
         self._value_entry.configure(state="readonly")
         #
         self._check_fields()
-        for child in self._get_items(): child.disable()
+        for child in self._get_items(): child.readonly = True
 
-    def read_only(self, value : bool):
-        self.disable() if value else self.enable()
+    @property
+    def readonly(self) -> bool:
+        return self._readonly
+
+    @readonly.setter
+    def readonly(self, value : bool):
+        if value == self._readonly : return
+        #
+        self._readonly = value
+        self._disable() if value else self._enable()
 
     def reset(self):
         self._clear_items()
@@ -325,12 +372,8 @@ if __name__ == "__main__":
     root = tkinter.Tk()
     root.geometry("500x400")
     Style().theme_use("clam")
-    widget = DictView(
-        root,
-        key_name="Nom",
-        value_name="Code",
-        allow_repeated_value=True
-    )
+    widget = DictView(root, "Langues", key_name="Nom", value_name="Code", allow_repeated_value=True)
+    widget.readonly = True
     widget.set({"Francais": "fr", "Anglais": "en"})
     widget.on_changed = lambda v : print(v)
     widget.pack(fill='both', expand=True)

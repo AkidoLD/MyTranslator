@@ -2,10 +2,13 @@ import tkinter as tk
 
 
 class CircleWidget(tk.Canvas):
-    def __init__(self, parent, diameter : float = 10, color : str = "white", outline : str = "black", width : int = 1, **kwargs):
+
+    def __init__(self, parent, diameter: float = 10, color: str = "white", width: int = 0, outline: str = "black",
+                 **kwargs):
         super().__init__(parent, highlightthickness=0, **kwargs)
         self._diameter = diameter
-        self.config(width=diameter, height=diameter)
+        self._padding = max(1, width)  # padding = épaisseur du contour minimum
+        self.config(width=diameter + self._padding * 2, height=diameter + self._padding * 2)
         self._color = color
         self._outline = outline
         self._width = width
@@ -14,18 +17,18 @@ class CircleWidget(tk.Canvas):
         #Bind the drawing callback
         self.bind("<Configure>", self.draw_circle)
 
-    def draw_circle(self, event = None):
-        #Erase the circle if it is already draw
-        if self._circle :
-            self.delete(self._circle)
+        # ...
 
-        #Calculate the circle position
+    def draw_circle(self, event=None):
+        if self._circle: self.delete(self._circle)
+        #
         w, h = self.winfo_width(), self.winfo_height()
-        x0 , y0 = (w - self._diameter) / 2, (h - self._diameter) / 2
-        x1 , y1 = x0 + self._diameter, y0 + self._diameter
-
-        #Draw a new circle with the new dimension and position
-        self._circle = self.create_oval(x0, y0, x1, y1, fill=self._color, outline=self._outline, width=self._width)
+        x0 = (w - self._diameter) / 2
+        y0 = (h - self._diameter) / 2
+        x1 = x0 + self._diameter
+        y1 = y0 + self._diameter
+        #
+        self._circle = self.create_oval(x0, y0, x1, y1, fill=self._color, width=self._width, outline=self._outline)
 
     @property
     def color(self):

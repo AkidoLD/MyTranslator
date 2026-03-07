@@ -21,7 +21,7 @@ class StackFrame(Frame):
         self._raised_item : Widget | None = None
         #
 
-    def add_item(self, item_id, widget : Type[Widget], **kwargs) -> Widget:
+    def add_item(self, item_id, widget : Type[Widget], **kwargs):
         if not issubclass(widget, Widget):
             raise TypeError(f"add_widget method wait a subclass of Widget, got type {widget.__name__}")
         #

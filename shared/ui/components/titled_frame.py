@@ -15,12 +15,14 @@ class TitledFrame(Frame):
             anchor : Literal["nw", "n", "ne", "w", "center", "e", "sw", "s", "se"] = "w",
             font : Tuple[str, int] | Tuple[str, int, str] = ("", 14, "bold"),
             style : str = 'TitlePane.TitledFrame.TFrame',
+            padx : int | tuple[int, int]= 1,
+            pady : int | tuple[int, int]= 1,
             **kwargs
     ):
         super().__init__(master, **kwargs)
         #Set default style
         Style().configure(style, background=background)
-
+        #
         #Build UI
         self._title_pane = Frame(self, style=style, padding=(2, 2))
         self._content_pane = Frame(self)
@@ -37,7 +39,7 @@ class TitledFrame(Frame):
         self._title_pane.pack(side='top', fill='x')
         self._title_lb.pack(fill='x', anchor=anchor)
         #
-        self._content_pane.pack(side='top', fill='both', expand=True)
+        self._content_pane.pack(side='top', fill='both', expand=True, padx=padx, pady=pady)
 
     @property
     def pane(self):

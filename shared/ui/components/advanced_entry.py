@@ -28,8 +28,21 @@ class AdvancedEntry(Entry):
         self._placeholder_color = placeholder_color
         self._placeholder_is_shown = False
         #
+        self.bind("<Control-v>", self._on_control_v)
+        self.bind("<Control-a>", self._on_control_a)
         self.text = text
-    
+
+
+    def _on_control_a(self, _):
+        if self._placeholder_is_shown: return "break"
+        self.selection_range(0, 'end')
+        return "break"
+
+    def _on_control_v(self, _):
+        self.text = self.text + self.clipboard_get()
+        return "break"
+
+
     @property
     def textvariable(self) -> StringVar:
         return self._textvariable
@@ -50,7 +63,7 @@ class AdvancedEntry(Entry):
 
     @text.setter
     def text(self, value):
-        if value : self._hide_placeholder()
+        self._hide_placeholder()
         self.textvariable.set(validate_type(value, str, "text"))
 
     @property
@@ -81,6 +94,8 @@ class AdvancedEntry(Entry):
         self._cursor_lock_id = self.bind("<ButtonPress>", self._lock_cursor, add="+")
         self.bind("<B1-Motion>", self._lock_cursor, add="+")
         self.bind("<Key>", self._lock_cursor, add="+")
+        self.bind("<FocusIn>", self._lock_cursor, add="+")
+
 
     def _hide_placeholder(self):
         if not self._placeholder_is_shown: return
@@ -92,6 +107,7 @@ class AdvancedEntry(Entry):
         self.unbind("<ButtonPress>")
         self.unbind("<B1-Motion>")
         self.unbind("<Key>")
+        self.unbind("<FocusIn>")
         #
         self.after(0, lambda _: super(AdvancedEntry, self).icursor('end'), None)
 

@@ -21,28 +21,25 @@ class FakeHistoryRepository(HistoryRepository):
         if not self._history_map.get(key): self._history_map[key] = []
         self._history_map[key].append(data)
 
-    def add_history_list(self, history_list : Iterable[Dict]):
-        for data in history_list :
-            self.add_history(data)
-
     def delete_history_by_id(self, history_id: str):
-        self.add_history_list([x for x in self.get_all_history() if x["id"] != history_id])
+        for h in self.get_all_history() :
+            if h.get("id") != history_id : self.add_history(h)
 
-    def count_history_by_provider(self, provider_key: str) -> int:
+    def provider_history_count(self, provider_key: str) -> int:
         return len([value for value in self.get_all_history() if value.get("provider_key") == provider_key])
 
     def count_all_history(self) -> int:
         return sum(len(p) for p in self._history_map.values())
 
-    def history_of_provider_is_empty(self, provider_key) -> bool:
+    def provider_history_is_empty(self, provider_key) -> bool:
         return not self._history_map[provider_key]
 
     def history_is_empty(self) -> bool:
         return not self._history_map
 
-    def get_history_by_provider(self, provider_key: str, offset: int = 0, limit: int | None = None) -> List[Dict]:
+    def get_provider_history(self, provider_key: str, offset: int = 0, limit: int | None = None) -> List[Dict]:
         _offset = offset
-        _history_count = self.count_history_by_provider(provider_key)
+        _history_count = self.provider_history_count(provider_key)
         limit = limit if limit is not None else _history_count
         _limit = min(limit + _offset, _history_count)
         #

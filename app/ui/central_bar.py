@@ -1,9 +1,8 @@
 import tkinter as tk
 from tkinter import Frame
-from tkinter.ttk import Button
+from tkinter.ttk import Button, Style
 
 from history.ui.history_frame import HistoryFrame
-from settings.ui.setting_frame import SettingFrame
 from shared.ui.components.menu_stack import MenuStack
 from shared.ui.components.stack_frame import StackFrame
 from translation.ui.translation_frame import TranslationFrame
@@ -19,9 +18,9 @@ class CentralBar(tk.Frame):
         self.stack.pack(side="top", fill="both", expand=True)
 
         # Create stacks
-        self.translation_frame = self.stack.add_item('trad', TranslationFrame)
-        self.historic_frame = self.stack.add_item('hist', HistoryFrame)
-        self.setting_frame = self.stack.add_item('setting', MenuStack)
+        self.translation_frame : TranslationFrame = self.stack.add_item('trad', TranslationFrame)
+        self.historic_frame : HistoryFrame = self.stack.add_item('hist', HistoryFrame)
+        self.setting_frame : MenuStack = self.stack.add_item('setting', MenuStack)
         #
         buttons = {
             "Traduire": "trad",
@@ -30,11 +29,17 @@ class CentralBar(tk.Frame):
         }
 
         for text, tag in buttons.items():
-            btn = Button(self.nav_bar, text=text, cursor="hand2")
-            btn.pack(padx=1 , pady=1, side="left")
-            btn.bind("<Button-1>", lambda e, t = tag: self.on_switch_bt_clicked(tag=t, event=e))
+            btn = Button(self.nav_bar, text=text, cursor="hand2", style="Btn.CentralBar.TButton")
+            btn.pack(padx=2 , pady=2, side="left")
+            btn.config(command=lambda t=tag : self.stack.raise_item(t))
 
-    def on_switch_bt_clicked(self, tag, event):
+        #
+        Style().configure(
+            "Btn.CentralBar.TButton",
+            font=("Arial", 14)
+        )
+
+    def on_switch_bt_clicked(self, tag):
         self.stack.raise_item(tag)
 
 

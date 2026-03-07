@@ -10,7 +10,9 @@ from shared.infra.utils.validation_utils import validate_type, validate_not_empt
 from shared.ui.components.smart_frame import SmartFrame
 from translation.ui.components.provider_combobox import ProviderInternetReqCircle
 
+
 class TransProviderWidget(Frame):
+
     _DELETE_IMG_PATH = os.path.join(os.path.dirname(__file__), "../../resources/icons8-trash-can-100.png")
 
     def __init__(
@@ -28,14 +30,13 @@ class TransProviderWidget(Frame):
         super().__init__(master, bd=2, relief="solid", cursor="hand2", **kwargs)
         #
         self._configure_styles()
-        #
         self._delete_img = ImageUtils.get_tk_image(self._DELETE_IMG_PATH, (25, 25))
         #
         self._info_pane = SmartFrame(self)
         self._status_circle = ProviderInternetReqCircle(self._info_pane, provider_req_internet, 15)
         self._provider_name_lb = Label(self._info_pane, style="ProviderName.TLabel")
-        self._provider_type_lb = Label(self._info_pane, style="ProviderType.TLabel")
-        self._lang_count_lb = Label(self._info_pane, style="ProviderLang.TLabel")
+        self._provider_type_lb = Label(self._info_pane, style="ProviderType.TLabel", width=0)
+        self._lang_count_lb = Label(self._info_pane, style="ProviderLang.TLabel", width=0)
         self._delete_provider_btn = Button(self, style="DeleteProvider.TButton", image=self._delete_img)
         #
         self.provider_id = provider_id
@@ -48,6 +49,8 @@ class TransProviderWidget(Frame):
         #
         self._build_ui()
 
+    # ─── Setup ────────────────────────────────────────────────────────────────
+
     def _configure_styles(self):
         Style(self).configure("ProviderName.TLabel", font=("Ubuntu", 14, "bold"))
         Style(self).configure("ProviderType.TLabel", font=("Arial", 14))
@@ -56,16 +59,17 @@ class TransProviderWidget(Frame):
         Style(self).map("DeleteProvider.TButton", background=[("active", "#fd3232")])
 
     def _build_ui(self):
+        self._delete_provider_btn.pack(side="right", padx=(5, 0))
+        self._lang_count_lb.pack(side="right", padx=5)
+        self._provider_type_lb.pack(side="right", padx=10)
         self._info_pane.pack(side="left", fill="x", expand=True)
         self._status_circle.pack(side="left", padx=5)
         self._provider_name_lb.pack(side="left", padx=5)
         #
-        self._delete_provider_btn.pack(side="right", padx=(5, 0))
-        self._lang_count_lb.pack(side="right", padx=5)
-        self._provider_type_lb.pack(side="right", padx=10)
-        #
         self._info_pane.bind(SmartFrame.SMART_L_CLICK, lambda _: self._handler_on_clicked())
-        self._delete_provider_btn.bind("<Button-1>", lambda _: self._handler_on_delete_btn_clicked())
+        self._delete_provider_btn.bind("<Button-1>", lambda _: self.after(0, self._handler_on_delete_btn_clicked))
+
+    # ─── Handlers ─────────────────────────────────────────────────────────────
 
     def _handler_on_clicked(self):
         if self._on_clicked:
@@ -83,9 +87,7 @@ class TransProviderWidget(Frame):
 
     @provider_id.setter
     def provider_id(self, value: str):
-        validate_type(value, str, "provider_id")
-        validate_not_empty(value, "provider_id")
-        self._provider_id = value
+        self._provider_id = validate_not_empty(validate_type(value, str, "provider_id"), "provider_id")
 
     @property
     def provider_status(self) -> bool:
@@ -101,9 +103,7 @@ class TransProviderWidget(Frame):
 
     @provider_name.setter
     def provider_name(self, value: str):
-        validate_type(value, str, "provider_name")
-        validate_not_empty(value, "provider_name")
-        self._provider_name_lb.config(text=value)
+        self._provider_name_lb.config(text=validate_not_empty(validate_type(value, str, "provider_name"), "provider_name"))
 
     @property
     def provider_type(self) -> str:
@@ -111,9 +111,7 @@ class TransProviderWidget(Frame):
 
     @provider_type.setter
     def provider_type(self, value: str):
-        validate_type(value, str, "provider_type")
-        validate_not_empty(value, "provider_type")
-        self._provider_type_lb.config(text=value)
+        self._provider_type_lb.config(text=validate_not_empty(validate_type(value, str, "provider_type"), "provider_type"))
 
     @property
     def provider_lang_count(self) -> int:
@@ -121,8 +119,7 @@ class TransProviderWidget(Frame):
 
     @provider_lang_count.setter
     def provider_lang_count(self, value: int):
-        validate_type(value, int, "provider_lang_count")
-        self._lang_count = value
+        self._lang_count = validate_type(value, int, "provider_lang_count")
         self._lang_count_lb.config(text=f"({value}) Langues")
 
     @property
@@ -147,8 +144,10 @@ if __name__ == "__main__":
     root.geometry("500x100")
     root.title("TransProviderWidget Test")
     #
-    TransProviderWidget(root, str(uuid.uuid4()), "Trans", "binary", 12, True,
-                        on_clicked=lambda _id: print(f"Provider {_id} clicked"),
-                        on_delete_btn_clicked=lambda _id: print(f"Provider {_id} deleted")).pack(fill="x", padx=10, pady=10)
+    TransProviderWidget(
+        root, str(uuid.uuid4()), "Trans", "binary", 12, True,
+        on_clicked=lambda _id: print(f"Provider {_id} clicked"),
+        on_delete_btn_clicked=lambda _id: print(f"Provider {_id} deleted")
+    ).pack(fill="x", padx=10, pady=10)
     #
     root.mainloop()

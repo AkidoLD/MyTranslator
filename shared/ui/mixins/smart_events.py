@@ -29,7 +29,7 @@ class SmartEventMixin:
         self.bind_all("<FocusIn>", self._dispatch_event, "+")
 
     def _is_inside(self, widget : Widget) -> bool:
-        if not isinstance(widget, Widget) : return false
+        if not isinstance(widget, Widget) : return False
         try :
             while widget:
                 if widget == self:

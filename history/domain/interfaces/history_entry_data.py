@@ -7,6 +7,10 @@ from shared.domain.interfaces.mappable import Mappable
 
 
 class HistoryEntryData(Mappable, ABC):
+    ENTRY_ID = "entry_id"
+    ENTRY_TIME = "entry_time"
+    #
+
     def __init__(self, provider_key : str, entry_id : str = None, entry_time : datetime = None):
         self.module_name = provider_key
         self.id = entry_id or str(uuid.uuid4())

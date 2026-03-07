@@ -1,5 +1,6 @@
 import os.path
 import tkinter
+import uuid
 
 from tkinter import Widget, Frame
 from tkinter.ttk import Button, Style
@@ -203,10 +204,11 @@ class MenuStack(Frame):
         #
         return _btn
 
-    def add_menu(self, menu_id : str, title : str, menu_class : Type[Widget] = None, group_id : str = None, **kwargs):
+    def add_menu(self, title : str, menu_class : Type[Widget] = None, menu_id : str = None,  group_id : str = None, **kwargs):
         if menu_class and not issubclass(menu_class, Widget):
             raise TypeError(f"menu_class must be subclass of Widget, got class {type(menu_class)}")
         #
+        menu_id = menu_id or str(uuid.uuid4())
         _btn = self._add_menu_btn(title, menu_id, group_id)
         #
         if menu_class :
@@ -221,9 +223,9 @@ if __name__ == "__main__" :
     root.geometry("500x400")
     #
     pane = MenuStack(root)
-    app_frame = pane.add_menu("application", "Application", tkinter.Frame, background="yellow")
-    config_pane = pane.add_menu("config", "Configuration", tkinter.Frame, "application", background="pink")
-    lang_setting = pane.add_menu('lang', "Languages", tkinter.Frame, "config", background="cyan")
+    app_frame = pane.add_menu("Application", tkinter.Frame, "application", background="yellow")
+    config_pane = pane.add_menu("Configuration", tkinter.Frame,"config", "application", background="pink")
+    lang_setting = pane.add_menu("Languages", tkinter.Frame, "config", background="cyan")
     #
     Button(app_frame, text="App frame btn").pack(side='top', fill='x')
     Button(config_pane, text="Config frame btn").pack(side='top', fill='x')

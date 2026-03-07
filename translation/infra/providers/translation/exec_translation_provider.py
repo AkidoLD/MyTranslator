@@ -1,7 +1,7 @@
+import re
 import subprocess
 from subprocess import TimeoutExpired
 from typing import Self
-
 
 from translation.domain.exceptions.translation_error import TranslationError, ProviderUnavailableError, \
     TranslationTimeOutError
@@ -12,13 +12,21 @@ from translation.infra.enums.translation_provider_type import TranslationProvide
 
 
 class ExecTranslationProvider(TranslationProvider):
-    _SRC_LANG_TEMPLATE = "@src_lang"
-    _TARGET_LANG_TEMPLATE = "@target_lang"
-
     #Mappable keys
     KEY_BINARY = "binary"
     KEY_ARGS = "args"
     KEY_LANG_TEMPLATE = "lang_template"
+
+    #
+    _SRC_LANG_TEMPLATE = "@src_lang"
+    _TARGET_LANG_TEMPLATE = "@target_lang"
+
+    #
+    _BLACKLISTED_BINARIES = {
+        "rm", "mkfs", "dd", "fdisk", "shred", "wipefs",
+        "shutdown", "reboot", "halt", "poweroff",
+        "chmod", "chown", "chroot", "sudo", "su",
+    }
 
     def __init__(
             self,
@@ -29,6 +37,7 @@ class ExecTranslationProvider(TranslationProvider):
             lang_template: str,
             languages: dict = None,
             req_internet: bool = True,
+            detect_src_lang: bool = False,
             timeout: float = 5.0
     ):
         """
@@ -57,7 +66,7 @@ class ExecTranslationProvider(TranslationProvider):
             When calling translate(), the command executed will look like:
                 trans -b fr:en text
         """
-        super().__init__(provider_id, name, req_internet, languages, True, timeout)
+        super().__init__(provider_id, name, req_internet, languages, detect_src_lang, timeout)
 
         self.binary = binary
         self.arguments = arguments
@@ -68,21 +77,30 @@ class ExecTranslationProvider(TranslationProvider):
         return self._binary
 
     @binary.setter
-    def binary(self, value :str):
+    def binary(self, value: str):
         if not isinstance(value, str):
-            raise TypeError(f"_name_lb must be str, got {type(value).__name__}")
+            raise TypeError(f"binary must be str, got {type(value).__name__}")
 
-        if not value.strip():
-            raise ValueError("Provider value cannot be empty")
+        value = value.strip()
 
-        self._binary = value.strip()
+        if not value:
+            raise ValueError("Provider binary cannot be empty")
+
+        if not re.match(r'^[a-zA-Z0-9/_\-.]+$', value):
+            raise ValueError(f"Provider binary contains invalid characters: {value}")
+        #
+        binary_name = value.split("/")[-1]
+        if binary_name in self._BLACKLISTED_BINARIES:
+            raise ValueError(f"Binary '{binary_name}' is not allowed for security reasons.")
+
+        self._binary = value
 
     @property
     def arguments(self):
         return self._arguments
 
     @arguments.setter
-    def arguments(self, value : dict):
+    def arguments(self, value: dict):
         if not isinstance(value, dict):
             raise TypeError(f"argument must be dictionary, got _type {type(value).__name__}")
         #
@@ -93,18 +111,17 @@ class ExecTranslationProvider(TranslationProvider):
         return self._lang_template
 
     @lang_template.setter
-    def lang_template(self, value : str):
+    def lang_template(self, value: str):
         if not isinstance(value, str):
             raise ValueError(f"lang_template must be string, got _type {type(value).__name__}")
         #
-        if self._SRC_LANG_TEMPLATE not in value :
+        if self._SRC_LANG_TEMPLATE not in value:
             raise ValueError(f"lang_template must contain {self._SRC_LANG_TEMPLATE} to identify src language")
         #
-        if self._TARGET_LANG_TEMPLATE not in value :
+        if self._TARGET_LANG_TEMPLATE not in value:
             raise ValueError(f"lang_template must contain {self._TARGET_LANG_TEMPLATE} to identify target language")
         #
         self._lang_template = value
-
 
     def translate(self, request: TranslationRequest) -> TranslationResponse:
         """
@@ -143,7 +160,7 @@ class ExecTranslationProvider(TranslationProvider):
         except FileNotFoundError as e:
             raise ProviderUnavailableError(f"Provider binary not found. Check at {self.binary} if it exist.", e)
 
-        except  TimeoutExpired as e :
+        except  TimeoutExpired as e:
             raise TranslationTimeOutError(f"translation timeout exceeded.", e)
 
         if process.returncode != 0:
@@ -166,16 +183,16 @@ class ExecTranslationProvider(TranslationProvider):
 
     def to_dict(self) -> dict:
         return {
-            self.KEY_ID : self.id,
-            self.KEY_NAME : self.name,
-            self.KEY_BINARY : self.binary,
-            self.KEY_TYPE : self.type,
-            self.KEY_ARGS : self.arguments,
-            self.KEY_LANG_TEMPLATE : self.lang_template,
-            self.KEY_REQ_INTERNET : self.req_internet,
-            self.KEY_LANGUAGES : self.languages,
-            self.KEY_DETECT_SRC_LANG : self.detect_src_lang,
-            self.KEY_TIMEOUT : self.timeout
+            self.KEY_ID: self.id,
+            self.KEY_NAME: self.name,
+            self.KEY_BINARY: self.binary,
+            self.KEY_TYPE: self.type,
+            self.KEY_ARGS: self.arguments,
+            self.KEY_LANG_TEMPLATE: self.lang_template,
+            self.KEY_REQ_INTERNET: self.req_internet,
+            self.KEY_LANGUAGES: self.languages,
+            self.KEY_DETECT_SRC_LANG: self.detect_src_lang,
+            self.KEY_TIMEOUT: self.timeout
         }
 
     @classmethod
@@ -188,6 +205,7 @@ class ExecTranslationProvider(TranslationProvider):
             data.get(cls.KEY_LANG_TEMPLATE, ""),
             data.get(cls.KEY_LANGUAGES, {}),
             data.get(cls.KEY_REQ_INTERNET, True),
+            data.get(cls.KEY_DETECT_SRC_LANG, False),
             data.get(cls.KEY_TIMEOUT, 5.0)
         )
 

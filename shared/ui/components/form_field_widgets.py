@@ -24,7 +24,7 @@ class EntryField(AdvancedEntry, FormField):
         FormField.__init__(self, name, required=required)
         #
         self.bind(self.TEXT_CHANGED, lambda _ : self._handler_on_changed())
-        self.disable() if read_only else self.enable()
+        self._disable() if read_only else self._enable()
 
     def set(self, value: Any):
         self.text = value
@@ -32,10 +32,10 @@ class EntryField(AdvancedEntry, FormField):
     def get(self) -> Any:
         return self.text
 
-    def enable(self):
+    def _enable(self):
         self.configure(state='normal')
 
-    def disable(self):
+    def _disable(self):
         self.configure(state='readonly')
 
     def reset(self):
@@ -55,12 +55,16 @@ class ComboBoxField(Combobox, FormField):
         FormField.__init__(self, name, required=required)
         #
         self.bind("<<ComboboxSelected>>", lambda _: self._handler_on_changed())
-        self.disable() if read_only else self.enable()
+        self._disable() if read_only else self._enable()
 
-    def enable(self):
+    def set(self, value):
+        super().set(value)
+        self._handler_on_changed()
+
+    def _enable(self):
         self.configure(state='readonly')
 
-    def disable(self):
+    def _disable(self):
         self.configure(state='disabled')
 
     def reset(self):
@@ -97,10 +101,10 @@ class ComboBoxValuesField(FormField):
     def get(self) -> Tuple[str]:
         return self.host_combobox.cget("values")
 
-    def enable(self):
+    def _enable(self):
         pass
 
-    def disable(self):
+    def _disable(self):
         pass
 
 
@@ -118,7 +122,7 @@ class CheckBoxField(Checkbutton, FormField):
         self._state = BooleanVar(self, False)
         self.configure(variable=self._state, command=self._handler_on_changed)
         #
-        self.disable() if read_only else self.enable()
+        self._disable() if read_only else self._enable()
 
     def set(self, value: bool):
         self._state.set(value)
@@ -126,10 +130,10 @@ class CheckBoxField(Checkbutton, FormField):
     def get(self) -> Any:
         return self._state.get()
 
-    def enable(self):
+    def _enable(self):
         self.configure(state='normal')
 
-    def disable(self):
+    def _disable(self):
         self.configure(state='disabled')
 
     def reset(self):
@@ -143,12 +147,12 @@ class IntSpinBoxField(IntSpinBox, FormField):
         self._text_var = StringVar(self, '0')
         self.configure(textvariable=self._text_var)
         self._text_var.trace_add('write', lambda x, y, z : self._handler_on_changed())
-        self.disable() if read_only else self.enable()
+        self._disable() if read_only else self._enable()
 
-    def enable(self):
+    def _enable(self):
         self.configure(state='normal')
 
-    def disable(self):
+    def _disable(self):
         self.configure(state='readonly')
 
     def reset(self):

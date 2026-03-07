@@ -51,7 +51,7 @@ class TranslationEntry(SmartEventMixin, Frame):
         self._entry.pack(side="top", pady=60, padx=30, anchor="center", fill="x", expand=True)
         #
         self._float_menu = FloatFrame(self, True)
-        self._clipboard_btn = ClipboardButton(self._float_menu, self._entry.get(), relief="raised")
+        self._clipboard_btn = ClipboardButton(self._float_menu, self._entry.get, relief="raised")
         self._clipboard_btn.pack()
 
     def _bind_events(self):

@@ -4,10 +4,14 @@ from history.domain.interfaces.history_entry_data import HistoryEntryData
 from history.domain.interfaces.history_provider import HistoryProvider
 from history.domain.interfaces.history_repository import HistoryRepository
 from shared.infra.events.event_bus import event_bus
-from shared.infra.events.events import HistoryEvents
 
 
 class HistoryService :
+    HISTORY_ENTRY_ADDED = "history.entry.added"
+    HISTORY_ENTRY_DELETED = "history.entry.deleted"
+    HISTORY_PROVIDER_CHANGED = "history.provider.changed"
+    #
+
     def __init__(
             self,
             repository : HistoryRepository,
@@ -48,7 +52,11 @@ class HistoryService :
             raise ValueError(f"The provider with the key : {provider_key} has not found.")
         #
         self._active_provider = provider
-        event_bus.publish(HistoryEvents.PROVIDER_CHANGED, {"provider_key" : provider_key})
+        event_bus.publish(self.HISTORY_PROVIDER_CHANGED, {HistoryProvider.PROVIDER_KEY : provider_key})
+
+    def delete_history_entry(self, history_entry_id : str):
+        self._repository.delete_history_by_id(history_entry_id)
+        event_bus.publish(self.HISTORY_ENTRY_DELETED, {HistoryEntryData.ENTRY_ID : history_entry_id})
 
     @property
     def active_provider(self):
@@ -61,10 +69,10 @@ class HistoryService :
     def add_history_entry(self, history_entry : HistoryEntryData):
         self.repository.add_history(history_entry.to_dict())
         #
-        event_bus.publish(HistoryEvents.ENTRY_ADDED, history_entry.to_dict())
+        event_bus.publish(self.HISTORY_ENTRY_ADDED, history_entry.to_dict())
 
     def add_history_entry_list(self, history_list : List[HistoryEntryData]):
-        self.repository.add_history_list((data.to_dict() for data in history_list))
+        for data in history_list : self.add_history_entry(data)
 
     def get_active_provider_history(self, offset : int = 0, limit : int |  None = None) -> List[HistoryEntryData]:
         if not self.active_provider :
@@ -76,7 +84,7 @@ class HistoryService :
         if not isinstance(provider, HistoryProvider):
             raise TypeError(f"The provider must be type of HistoryProvider. The Actual is {type(provider)}")
         #
-        return self.repository.count_history_by_provider(provider.provider_key)
+        return self.repository.provider_history_count(provider.provider_key)
 
     def get_all_history_count(self):
         return self.repository.count_all_history()
@@ -85,7 +93,7 @@ class HistoryService :
         if not isinstance(provider, HistoryProvider) :
             raise TypeError(f"The provider must be type of HistoryProvider. The Actual is {type(provider)}")
         #
-        datas = self.repository.get_history_by_provider(provider.provider_key, offset, limit)
+        datas = self.repository.get_provider_history(provider.provider_key, offset, limit)
         #
         return [provider.deserialize_entry_data(data) for data in datas]
 
